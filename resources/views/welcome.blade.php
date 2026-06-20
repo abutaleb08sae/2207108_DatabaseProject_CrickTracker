@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - CrickTracker</title>
+    <title>CrickTracker - KUET Sports Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -14,8 +14,7 @@
         .side-nav .nav-link:hover, .side-nav .nav-link.active { color: #fff; background: rgba(255,255,255,0.05); border-left: 4px solid #38bdf8; }
         .main-content { margin-left: 260px; padding: 40px; }
         .dashboard-card { border: none; border-radius: 16px; background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.02); margin-bottom: 24px; padding: 24px; }
-        .table th { color: #64748b; font-weight: 600; font-size: 0.85rem; text-uppercase: true; }
-        .team-score-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .welcome-hero { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; border-radius: 16px; padding: 35px; margin-bottom: 30px; }
     </style>
 </head>
 <body>
@@ -25,125 +24,154 @@
             <i class="fa-solid fa-chart-line me-2"></i>CrickTracker
         </div>
         <div class="nav flex-column mt-4">
-            <a href="#" class="nav-link active"><i class="fa-solid fa-house"></i> Dashboard</a>
-            <a href="#" class="nav-link"><i class="fa-solid fa-history"></i> Recent Matches</a>
-            <a href="#" class="nav-link"><i class="fa-solid fa-calendar-days"></i> Upcoming Matches</a>
-            <a href="#" class="nav-link"><i class="fa-solid fa-user-astronaut"></i> Player Statistics</a>
-            <a href="#" class="nav-link"><i class="fa-solid fa-shield-halved"></i> Teams</a>
-            <a href="#" class="nav-link"><i class="fa-solid fa-newspaper"></i> News</a>
+            <a href="{{ url('/') }}" class="nav-link {{ $currentView == 'dashboard' ? 'active' : '' }}"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a href="{{ url('/recent-matches') }}" class="nav-link {{ $currentView == 'recent' ? 'active' : '' }}"><i class="fa-solid fa-history"></i> Recent Matches</a>
+            <a href="{{ url('/upcoming-matches') }}" class="nav-link {{ $currentView == 'upcoming' ? 'active' : '' }}"><i class="fa-solid fa-calendar-days"></i> Upcoming Matches</a>
+            <a href="{{ url('/player-statistics') }}" class="nav-link {{ $currentView == 'stats' ? 'active' : '' }}"><i class="fa-solid fa-user-astronaut"></i> Player Statistics</a>
+            <a href="{{ url('/teams') }}" class="nav-link {{ $currentView == 'teams' ? 'active' : '' }}"><i class="fa-solid fa-shield-halved"></i> Teams</a>
+            <a href="{{ url('/news') }}" class="nav-link {{ $currentView == 'news' ? 'active' : '' }}"><i class="fa-solid fa-newspaper"></i> News</a>
         </div>
     </div>
 
     <div class="main-content">
-        <div class="row">
+        
+        @if($currentView == 'dashboard')
+            <div class="welcome-hero shadow-sm">
+                <h2 class="fw-bold mb-2">Welcome to CrickTracker KUET</h2>
+                <p class="lead mb-0">The official live cricket tracking system for Khulna University of Engineering & Technology. Track real-time live match streams, tournament point matrices, structural department statistics, and recent highlights across our internal campus updates.</p>
+            </div>
             
-            <div class="col-lg-8">
-                <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-circle-check text-success me-2"></i>Recent Matches</h5>
-                <div class="row">
-                    @foreach($recentMatches as $match)
-                        <div class="col-md-6 mb-4">
-                            <div class="card dashboard-card h-100 mb-0">
-                                <div class="d-flex justify-content-between text-muted small mb-3">
-                                    <span>{{ $match->type }} Match</span>
-                                    <span class="text-success fw-bold">Finished</span>
-                                </div>
-                                <div class="team-score-row">
-                                    <span class="fs-5 fw-bold text-dark">{{ $match->team1 }}</span>
-                                    <span class="fs-5 fw-bold text-secondary">{{ $match->score1 }} <small class="text-muted text-xs">({{ $match->overs1 }})</small></span>
-                                </div>
-                                <div class="team-score-row mb-3">
-                                    <span class="fs-5 fw-bold text-dark">{{ $match->team2 }}</span>
-                                    <span class="fs-5 fw-bold text-secondary">{{ $match->score2 }} <small class="text-muted text-xs">({{ $match->overs2 }})</small></span>
-                                </div>
-                                <hr class="my-2 opacity-50">
-                                <p class="text-success small mb-0 fw-bold"><i class="fa-solid fa-trophy me-1"></i> {{ $match->result }}</p>
-                            </div>
+            <div class="row">
+                <div class="col-md-7">
+                    <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-satellite-dish text-danger me-2"></i>Featured Ongoing Action</h5>
+                    <div class="card dashboard-card bg-light border">
+                        <div class="d-flex justify-content-between text-danger small fw-bold mb-3">
+                            <span>KUET Inter-Dept League</span>
+                            <span><i class="fa-solid fa-circle-dot animate-pulse"></i> LIVE UPDATING BALL-BY-BALL</span>
                         </div>
-                    @endforeach
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fs-5 fw-bold text-dark">CSE Department</span>
+                            <span class="fs-5 fw-bold text-dark">145/3 <small class="text-muted">(14.2 Overs)</small></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fs-5 fw-bold text-dark">EEE Department</span>
+                            <span class="text-muted small">Yet to bat</span>
+                        </div>
+                        <hr class="my-3">
+                        <p class="text-muted small mb-0"><i class="fa-solid fa-info-circle text-primary me-1"></i> <strong>Admin Panel Notice:</strong> This framework is configured for custom real-time score updates. Ball-by-ball inputs managed via backend entries will stream live indicators directly to the consumer screen.</p>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-university text-secondary me-2"></i>KUET Arena Summary</h5>
+                    <div class="card dashboard-card">
+                        <p class="small mb-2"><strong>Venue:</strong> KUET Main Sports Ground</p>
+                        <p class="small mb-2"><strong>Total Teams:</strong> 5 Engineering Departments</p>
+                        <p class="small mb-0"><strong>Current Status:</strong> League stage matches are active. Select an item from the side panel navigation grid to access complete details.</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-lg-4">
-                <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-newspaper text-primary me-2"></i>Latest News</h5>
-                <div class="card dashboard-card">
-                    @foreach($news as $item)
-                        <div class="mb-3 pb-3 border-bottom last-border-0">
-                            <h6 class="fw-bold mb-1 text-dark" style="font-size:0.95rem;">{{ $item->title }}</h6>
-                            <span class="text-muted small"><i class="fa-solid fa-clock me-1"></i>{{ $item->time }}</span>
+        @elseif($currentView == 'recent')
+            <h4 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-history text-success me-2"></i>Recent Matches Results</h4>
+            <div class="row">
+                @foreach($recentMatches as $match)
+                    <div class="col-md-6 mb-4">
+                        <div class="card dashboard-card h-100 mb-0">
+                            <div class="text-muted small mb-2">{{ $match->type }}</div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="fw-bold">{{ $match->team1 }}</span>
+                                <span class="fw-bold">{{ $match->score1 }} <small class="text-muted">({{ $match->overs1 }})</small></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="fw-bold">{{ $match->team2 }}</span>
+                                <span class="fw-bold">{{ $match->score2 }} <small class="text-muted">({{ $match->overs2 }})</small></span>
+                            </div>
+                            <div class="text-success small fw-bold border-top pt-2"><i class="fa-solid fa-trophy me-1"></i> {{ $match->result }}</div>
                         </div>
-                    @endforeach
-                </div>
+                    </div>
+                @endforeach
             </div>
 
-        </div>
-
-        <div class="row mt-2">
-            
-            <div class="col-md-6 col-lg-4">
-                <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-clock text-warning me-2"></i>Upcoming Matches</h5>
-                <div class="card dashboard-card">
-                    @foreach($upcomingMatches as $match)
-                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                            <div>
-                                <span class="fw-bold text-dark">{{ $match->team1 }} vs {{ $match->team2 }}</span>
-                                <div class="text-muted small">{{ $match->venue }}</div>
-                            </div>
-                            <div class="text-end">
-                                <span class="badge bg-light text-dark border d-block mb-1">{{ $match->date }}</span>
-                                <small class="text-muted">{{ $match->time }}</small>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-4">
-                <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-star text-warning me-2"></i>Top Performers</h5>
-                <div class="card dashboard-card">
-                    @foreach($playerStats as $player)
-                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                            <div>
-                                <span class="fw-bold text-dark">{{ $player->name }}</span>
-                                <div class="text-muted small">Dept: {{ $player->team }}</div>
-                            </div>
-                            <div class="text-end">
-                                <span class="fw-bold text-primary d-block">{{ $player->runs }} Runs</span>
-                                <small class="text-muted">SR: {{ $player->sr }}</small>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <div class="col-lg-4">
-                <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-table text-secondary me-2"></i>Teams Standings</h5>
-                <div class="card dashboard-card p-2">
-                    <table class="table table-borderless mb-0 align-middle">
-                        <thead>
+        @elseif($currentView == 'upcoming')
+            <h4 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-calendar-days text-warning me-2"></i>Upcoming Matches Schedule</h4>
+            <div class="card dashboard-card p-0 overflow-hidden">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="p-3">Match Fixture</th>
+                            <th class="p-3">Date</th>
+                            <th class="p-3">Time</th>
+                            <th class="p-3">Ground Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($upcomingMatches as $match)
                             <tr>
-                                <th>Team</th>
-                                <th class="text-center">P</th>
-                                <th class="text-center">W</th>
-                                <th class="text-center">L</th>
-                                <th class="text-center">PTS</th>
+                                <td class="p-3 fw-bold text-primary">{{ $match->team1 }} vs {{ $match->team2 }}</td>
+                                <td class="p-3"><span class="badge bg-secondary">{{ $match->date }}</span></td>
+                                <td class="p-3 text-muted">{{ $match->time }}</td>
+                                <td class="p-3 small">{{ $match->venue }}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($teams as $team)
-                                <tr>
-                                    <td class="fw-bold text-dark">{{ $team->name }}</td>
-                                    <td class="text-center">{{ $team->played }}</td>
-                                    <td class="text-center text-success">{{ $team->won }}</td>
-                                    <td class="text-center text-danger">{{ $team->lost }}</td>
-                                    <td class="text-center fw-bold text-primary">{{ $team->points }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
 
-        </div>
+        @elseif($currentView == 'stats')
+            <h4 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-user-astronaut text-info me-2"></i>Top Tournament Performers</h4>
+            <div class="row">
+                @foreach($playerStats as $player)
+                    <div class="col-md-6 mb-3">
+                        <div class="card dashboard-card">
+                            <h5 class="fw-bold text-dark mb-1">{{ $player->name }}</h5>
+                            <div class="text-muted small mb-3">Department: {{ $player->team }}</div>
+                            <div class="row text-center bg-light g-0 p-2 rounded">
+                                <div class="col-4 border-end"><small class="text-muted d-block">Runs</small><strong class="fs-5 text-primary">{{ $player->runs }}</strong></div>
+                                <div class="col-4 border-end"><small class="text-muted d-block">Avg</small><strong class="fs-5 text-dark">{{ $player->avg }}</strong></div>
+                                <div class="col-4"><small class="text-muted d-block">Strike Rate</small><strong class="fs-5 text-dark">{{ $player->sr }}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+        @elseif($currentView == 'teams')
+            <h4 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-table text-secondary me-2"></i>Points Table Standings</h4>
+            <div class="card dashboard-card p-0 overflow-hidden">
+                <table class="table table-striped mb-0 text-center align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-start p-3">Department</th>
+                            <th class="p-3">Played</th>
+                            <th class="p-3 text-success">Won</th>
+                            <th class="p-3 text-danger">Lost</th>
+                            <th class="p-3">Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($teams as $team)
+                            <tr>
+                                <td class="text-start p-3 fw-bold">{{ $team->name }}</td>
+                                <td class="p-3">{{ $team->played }}</td>
+                                <td class="p-3 text-success fw-bold">{{ $team->won }}</td>
+                                <td class="p-3 text-danger">{{ $team->lost }}</td>
+                                <td class="p-3 fw-bold text-primary">{{ $team->points }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+        @elseif($currentView == 'news')
+            <h4 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-newspaper text-primary me-2"></i>Latest Tournament News</h4>
+            @foreach($news as $item)
+                <div class="card dashboard-card mb-3">
+                    <h5 class="fw-bold text-dark mb-2">{{ $item->title }}</h5>
+                    <div class="text-muted small"><i class="fa-solid fa-clock me-1"></i> Published {{ $item->time }}</div>
+                </div>
+            @endforeach
+        @endif
+
     </div>
 
 </body>
