@@ -12,10 +12,6 @@ $data = [
         (object)['team1' => 'BME', 'team2' => 'CSE', 'date' => 'Tomorrow', 'time' => '02:00 PM', 'venue' => 'KUET Main Playground'],
         (object)['team1' => 'ECE', 'team2' => 'EEE', 'date' => 'June 25', 'time' => '10:00 AM', 'venue' => 'KUET Main Playground']
     ],
-    'playerStats' => [
-        (object)['name' => 'Abir Hasan', 'team' => 'CSE', 'runs' => 342, 'wickets' => 12, 'avg' => '42.75', 'sr' => '145.2'],
-        (object)['name' => 'Sakib Ahmed', 'team' => 'EEE', 'runs' => 289, 'wickets' => 8, 'avg' => '36.12', 'sr' => '138.5']
-    ],
     'news' => [
         (object)['title' => 'KUET Inter-Department Cricket Tournament 2026 kicks off in style', 'time' => '2 hours ago'],
         (object)['title' => 'Vice-Chancellor inaugurates the newly renovated main sports ground pitch', 'time' => '1 day ago']
@@ -34,11 +30,15 @@ Route::get('/upcoming-matches', function () use ($data) {
     return view('welcome', array_merge($data, ['currentView' => 'upcoming']));
 });
 
-Route::get('/player-statistics', function () use ($data) {
-    return view('welcome', array_merge($data, ['currentView' => 'stats']));
+Route::get('/player-statistics', function () {
+    $playerStats = DB::select('SELECT name, department, matches, innings, runs, batting_average, strike_rate FROM player_statistics ORDER BY runs DESC');
+    return view('welcome', [
+        'playerStats' => $playerStats,
+        'currentView' => 'stats'
+    ]);
 });
 
-Route::get('/teams', function () use ($data) {
+Route::get('/teams', function () {
     $teams = DB::select('SELECT name, played, won, lost, points FROM teams ORDER BY points DESC, name ASC');
     return view('welcome', [
         'teams' => $teams,

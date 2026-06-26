@@ -119,20 +119,33 @@
 
         @elseif($currentView == 'stats')
             <h4 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-user-astronaut text-info me-2"></i>Top Tournament Performers</h4>
-            <div class="row">
-                @foreach($playerStats as $player)
-                    <div class="col-md-6 mb-3">
-                        <div class="card dashboard-card">
-                            <h5 class="fw-bold text-dark mb-1">{{ $player->name }}</h5>
-                            <div class="text-muted small mb-3">Department: {{ $player->team }}</div>
-                            <div class="row text-center bg-light g-0 p-2 rounded">
-                                <div class="col-4 border-end"><small class="text-muted d-block">Runs</small><strong class="fs-5 text-primary">{{ $player->runs }}</strong></div>
-                                <div class="col-4 border-end"><small class="text-muted d-block">Avg</small><strong class="fs-5 text-dark">{{ $player->avg }}</strong></div>
-                                <div class="col-4"><small class="text-muted d-block">Strike Rate</small><strong class="fs-5 text-dark">{{ $player->sr }}</strong></div>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
+            <div class="card dashboard-card p-0 overflow-hidden">
+                <table class="table table-striped mb-0 text-center align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-start p-3">Batter</th>
+                            <th class="p-3">Department</th>
+                            <th class="p-3">Matches</th>
+                            <th class="p-3">Inns</th>
+                            <th class="p-3">Runs</th>
+                            <th class="p-3 text-success">Avg</th>
+                            <th class="p-3 text-primary">SR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($playerStats as $player)
+                            <tr>
+                                <td class="text-start p-3 fw-bold text-primary">{{ $player->name }}</td>
+                                <td class="p-3"><span class="badge bg-secondary">{{ $player->department }}</span></td>
+                                <td class="p-3">{{ $player->matches }}</td>
+                                <td class="p-3">{{ $player->innings }}</td>
+                                <td class="p-3 fw-bold">{{ $player->runs }}</td>
+                                <td class="p-3 text-success fw-bold">{{ $player->batting_average }}</td>
+                                <td class="p-3 text-primary fw-bold">{{ $player->strike_rate }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
 
         @elseif($currentView == 'teams')
