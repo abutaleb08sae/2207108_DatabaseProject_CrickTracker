@@ -31,9 +31,12 @@ Route::get('/upcoming-matches', function () use ($data) {
 });
 
 Route::get('/player-statistics', function () {
-    $playerStats = DB::select('SELECT name, department, matches, innings, runs, batting_average, strike_rate FROM player_statistics ORDER BY runs DESC');
+    $battingStats = DB::select('SELECT name, department, matches, innings, runs, highest_score, batting_average, strike_rate, hundreds, fifties FROM player_statistics WHERE runs > 50 ORDER BY runs DESC');
+    $bowlingStats = DB::select('SELECT name, department, matches, wickets, bowling_runs, best_bowling, economy, five_w FROM player_statistics WHERE wickets > 0 ORDER BY wickets DESC');
+    
     return view('welcome', [
-        'playerStats' => $playerStats,
+        'battingStats' => $battingStats,
+        'bowlingStats' => $bowlingStats,
         'currentView' => 'stats'
     ]);
 });
