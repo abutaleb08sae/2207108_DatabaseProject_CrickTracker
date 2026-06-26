@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use Illuminate\Support\Facades\DB;
 
 $data = [
     'recentMatches' => [
@@ -15,12 +15,6 @@ $data = [
     'playerStats' => [
         (object)['name' => 'Abir Hasan', 'team' => 'CSE', 'runs' => 342, 'wickets' => 12, 'avg' => '42.75', 'sr' => '145.2'],
         (object)['name' => 'Sakib Ahmed', 'team' => 'EEE', 'runs' => 289, 'wickets' => 8, 'avg' => '36.12', 'sr' => '138.5']
-    ],
-    'teams' => [
-        (object)['name' => 'CSE', 'played' => 4, 'won' => 3, 'lost' => 1, 'points' => 6],
-        (object)['name' => 'EEE', 'played' => 4, 'won' => 3, 'lost' => 1, 'points' => 6],
-        (object)['name' => 'ME', 'played' => 4, 'won' => 2, 'lost' => 2, 'points' => 4],
-        (object)['name' => 'ECE', 'played' => 4, 'won' => 0, 'lost' => 4, 'points' => 0]
     ],
     'news' => [
         (object)['title' => 'KUET Inter-Department Cricket Tournament 2026 kicks off in style', 'time' => '2 hours ago'],
@@ -45,7 +39,11 @@ Route::get('/player-statistics', function () use ($data) {
 });
 
 Route::get('/teams', function () use ($data) {
-    return view('welcome', array_merge($data, ['currentView' => 'teams']));
+    $teams = DB::select('SELECT name, played, won, lost, points FROM teams ORDER BY points DESC, name ASC');
+    return view('welcome', [
+        'teams' => $teams,
+        'currentView' => 'teams'
+    ]);
 });
 
 Route::get('/news', function () use ($data) {
