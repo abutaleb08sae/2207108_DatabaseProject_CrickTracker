@@ -19,7 +19,6 @@ CREATE TABLE player_statistics (
     five_w NUMBER(3) DEFAULT 0
 );
 
--- 10 Dedicated Batsmen (High Runs, 0 Wickets)
 INSERT INTO player_statistics VALUES (1, 'Abir Hasan', 'CSE', 12, 12, 342, 84, 42.75, 145.2, 0, 3, 0, 0, '0/0', 0.00, 0);
 INSERT INTO player_statistics VALUES (2, 'Sakib Ahmed', 'EEE', 14, 13, 389, 102, 36.12, 138.5, 1, 1, 0, 0, '0/0', 0.00, 0);
 INSERT INTO player_statistics VALUES (3, 'Tanvir Rahman', 'ME', 10, 10, 245, 68, 30.63, 124.8, 0, 2, 0, 0, '0/0', 0.00, 0);
@@ -31,7 +30,7 @@ INSERT INTO player_statistics VALUES (8, 'Tahmid Anjum', 'URP', 10, 10, 230, 59,
 INSERT INTO player_statistics VALUES (9, 'Zahidul Islam', 'LE', 11, 10, 195, 55, 19.50, 110.2, 0, 1, 0, 0, '0/0', 0.00, 0);
 INSERT INTO player_statistics VALUES (10, 'Imtiaz Ahmed', 'TE', 8, 8, 182, 48, 22.75, 125.4, 0, 0, 0, 0, '0/0', 0.00, 0);
 
--- 10 Dedicated Bowlers (High Wickets, Low Runs)
+
 INSERT INTO player_statistics VALUES (11, 'Nahid Chowdhury', 'ECE', 11, 4, 32, 14, 8.00, 85.3, 0, 0, 18, 210, '4/15', 5.25, 0);
 INSERT INTO player_statistics VALUES (12, 'Asif Raihan', 'CE', 13, 6, 45, 18, 9.00, 92.1, 0, 0, 16, 245, '5/22', 5.80, 1);
 INSERT INTO player_statistics VALUES (13, 'Kamrul Islam', 'CSE', 12, 5, 28, 12, 7.00, 78.4, 0, 0, 15, 198, '4/20', 4.95, 0);
