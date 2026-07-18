@@ -10,9 +10,9 @@
             <h2 class="text-3xl font-black text-white tracking-tight flex items-center gap-3">
                 <span>Live Console:</span>
                 <span class="text-emerald-400">
-                    {{ $activeMatch->team1_name ?? $activeMatch->TEAM1_NAME ?? 'CSE' }} 
+                    {{ $activeMatch->team1_name ?? $activeMatch->TEAM1_NAME ?? 'Team A' }} 
                     <span class="text-slate-500 font-light text-xl lowercase mx-1">vs</span> 
-                    {{ $activeMatch->team2_name ?? $activeMatch->TEAM2_NAME ?? 'CE' }}
+                    {{ $activeMatch->team2_name ?? $activeMatch->TEAM2_NAME ?? 'Team B' }}
                 </span>
             </h2>
             <p class="text-slate-400 text-sm mt-1">Manage transactional ball events, coordinate dynamic line-ups, and stream live analytical modules downstream.</p>
@@ -23,6 +23,24 @@
             </a>
         </div>
     </div>
+
+    <!-- Feedback Notification Interceptor Engine -->
+    @if(session('success'))
+        <div class="bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 p-4 rounded-xl text-sm font-medium flex items-center gap-2">
+            <span>🎉</span> {{ session('success') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="bg-rose-950/40 border border-rose-500/30 text-rose-400 p-4 rounded-xl text-sm font-medium space-y-1">
+            <span class="font-bold flex items-center gap-2">⚠️ Configuration / Database Engine Execution Errors:</span>
+            <ul class="list-disc list-inside pl-2 text-xs opacity-90">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <!-- Active Lineup Management Panel Dropdowns Area -->
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
@@ -73,7 +91,7 @@
                 </div>
                 
                 <div class="mt-6 mb-2">
-                    <span class="text-xs uppercase tracking-widest font-bold text-slate-400 block mb-1">Batting: <span class="text-amber-400 font-black">{{ $activeMatch->team1_short_name ?? $activeMatch->TEAM1_SHORT_NAME ?? 'CSE' }}</span></span>
+                    <span class="text-xs uppercase tracking-widest font-bold text-slate-400 block mb-1">Batting: <span class="text-amber-400 font-black">{{ $activeMatch->team1_short_name ?? $activeMatch->TEAM1_SHORT_NAME ?? 'BAT' }}</span></span>
                     <div class="text-7xl font-black text-white tracking-tighter my-2 selection:bg-emerald-500">
                         {{ $activeMatch->team1_score ?? $activeMatch->TEAM1_SCORE ?? 0 }} <span class="text-slate-600 font-light">/</span> {{ $activeMatch->team1_wickets ?? $activeMatch->TEAM1_WICKETS ?? 0 }}
                     </div>
@@ -138,11 +156,11 @@
                 </div>
                 <div class="space-y-2 text-xs font-medium">
                     <div class="flex justify-between items-center py-0.5">
-                        <span class="text-slate-400">1st Inns ({{ $activeMatch->team1_short_name ?? $activeMatch->TEAM1_SHORT_NAME ?? 'CSE' }}):</span>
+                        <span class="text-slate-400">1st Inns ({{ $activeMatch->team1_short_name ?? $activeMatch->TEAM1_SHORT_NAME ?? 'TEAM 1' }}):</span>
                         <span class="text-white font-bold font-mono text-sm">{{ $activeMatch->team1_score ?? $activeMatch->TEAM1_SCORE ?? 0 }}/{{ $activeMatch->team1_wickets ?? $activeMatch->TEAM1_WICKETS ?? 0 }} ({{ number_format($activeMatch->team1_overs ?? $activeMatch->TEAM1_OVERS ?? 0.0, 1) }} Ov)</span>
                     </div>
                     <div class="flex justify-between items-center py-0.5">
-                        <span class="text-slate-400">2nd Inns ({{ $activeMatch->team2_short_name ?? $activeMatch->TEAM2_SHORT_NAME ?? 'CE' }}):</span>
+                        <span class="text-slate-400">2nd Inns ({{ $activeMatch->team2_short_name ?? $activeMatch->TEAM2_SHORT_NAME ?? 'TEAM 2' }}):</span>
                         <span class="text-slate-500 font-bold font-mono text-sm">0/0 (0.0 Ov)</span>
                     </div>
                 </div>
@@ -153,7 +171,7 @@
         <div class="lg:col-span-7 space-y-6">
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
                 
-                <!-- Main Processing Scoring Processing Form -->
+                <!-- Main Scoring Processing Form -->
                 <form id="ballScoringForm" action="{{ route('admin.matches.storeBall') }}" method="POST" class="space-y-6">
                     @csrf
                     <input type="hidden" name="match_id" value="{{ $activeMatch->match_id ?? $activeMatch->MATCH_ID ?? 1 }}">
@@ -189,7 +207,7 @@
                         </div>
 
                         <div class="grid grid-cols-3 gap-3 mb-3">
-                            <button type="button" onclick="setBallOutcome(6, '', 0, '')" class="bg-cyan-500 hover:bg-cyan-400 border border-cyan-500 text-slate-950 py-4 rounded-xl font-black transition text-sm shadow-md active:scale-[0.98] col-span-1">
+                            <button type="button" onclick="setBallOutcome(6, '', 0, '')" class="bg-cyan-500 hover:bg-cyan-400 border border-cyan-500 text-slate-950 py-4 rounded-xl font-black transition text-sm shadow-md active:scale-[0.98]">
                                 6 (SIX)
                             </button>
                             <button type="button" onclick="setBallOutcome(0, 'WIDE', 1, '')" class="bg-amber-500 hover:bg-amber-400 border border-amber-500 text-slate-950 py-4 rounded-xl font-bold transition text-sm shadow-md active:scale-[0.98]">
@@ -208,14 +226,14 @@
                         </div>
                     </div>
 
-                    <!-- Hidden Input Fields Matrix Form Elements -->
+                    <!-- Input Fields Matrix Form Elements -->
                     <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl space-y-4">
                         <div class="text-2xs font-bold uppercase tracking-widest text-slate-500">Form Selection Overview</div>
                         
                         <div class="grid grid-cols-3 gap-4">
                             <div>
                                 <label for="runs_scored" class="block text-2xs text-slate-400 font-bold uppercase mb-1">Bat Runs</label>
-                                <input type="number" id="runs_scored" name="runs_scored" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-bold text-center text-sm text-white text-mono outline-none">
+                                <input type="number" id="runs_scored" name="runs_scored" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-bold text-center text-sm text-white font-mono outline-none">
                             </div>
                             <div>
                                 <label for="extra_type" class="block text-2xs text-slate-400 font-bold uppercase mb-1">Extra Type</label>
@@ -229,7 +247,7 @@
                             </div>
                             <div>
                                 <label for="extra_runs" class="block text-2xs text-slate-400 font-bold uppercase mb-1">Extra Runs</label>
-                                <input type="number" id="extra_runs" name="extra_runs" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-bold text-center text-sm text-white text-mono outline-none">
+                                <input type="number" id="extra_runs" name="extra_runs" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-bold text-center text-sm text-white font-mono outline-none">
                             </div>
                         </div>
 
@@ -249,7 +267,7 @@
                     <!-- Commentary Description Field Area Box -->
                     <div>
                         <label for="description" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Ball Commentary Feed Text</label>
-                        <textarea id="description" name="description" placeholder="Describe the action event outcome briefly for the marquee live feed..." rows="2" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white placeholder-slate-600 rounded-xl p-4 text-sm transition outline-none resize-none"></textarea>
+                        <textarea id="description" name="description" placeholder="Describe the action event outcome briefly for the marquee live feed..." rows="2" required class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white placeholder-slate-600 rounded-xl p-4 text-sm transition outline-none resize-none"></textarea>
                     </div>
 
                     <!-- Submit Primary Processing Button Component -->
@@ -258,13 +276,18 @@
                     </button>
                 </form>
 
-                <!-- Lower Innings Management Footnotes Row Control Panel Grid -->
+                <!-- Lower Innings Management Control Panel Form Cluster -->
                 <div class="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-800/80">
-                    <button type="button" class="bg-slate-950 hover:bg-slate-800 border border-slate-700 text-white text-xs font-bold uppercase tracking-wider py-3 px-4 rounded-xl transition text-center">
-                        End 1st Innings
-                    </button>
-                    <button type="button" class="bg-transparent hover:bg-rose-950/20 border border-rose-500/30 hover:border-rose-500/50 text-rose-500 text-xs font-bold uppercase tracking-wider py-3 px-4 rounded-xl transition text-center">
-                        Reset All
+                    <form action="{{ route('admin.match-live.complete') }}" method="POST" onsubmit="return confirm('Are you sure you want to finalize this match environment and move it to historical archives?');">
+                        @csrf
+                        <input type="hidden" name="match_id" value="{{ $activeMatch->match_id ?? $activeMatch->MATCH_ID ?? 1 }}">
+                        <button type="submit" class="w-full bg-slate-950 hover:bg-slate-800 border border-slate-700 text-white text-xs font-bold uppercase tracking-wider py-3 px-4 rounded-xl transition text-center">
+                            Finalize & Complete Match
+                        </button>
+                    </form>
+
+                    <button type="button" onclick="resetFormState()" class="bg-transparent hover:bg-rose-950/20 border border-rose-500/30 hover:border-rose-500/50 text-rose-500 text-xs font-bold uppercase tracking-wider py-3 px-4 rounded-xl transition text-center">
+                        Reset Panel View
                     </button>
                 </div>
 
@@ -294,6 +317,14 @@
         } else {
             genericFeed.value = runs === 0 ? "Good delivery, dot ball logged." : runs + " run(s) scored dynamically away into space.";
         }
+    }
+
+    /**
+     * Clears local UI configurations safely back to default.
+     */
+    function resetFormState() {
+        document.getElementById('ballScoringForm').reset();
+        document.getElementById('description').value = '';
     }
 </script>
 @endsection
