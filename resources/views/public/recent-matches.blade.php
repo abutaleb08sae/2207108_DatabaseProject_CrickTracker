@@ -1,83 +1,118 @@
-@extends('layouts.master') <!-- Extends your main master layout framework -->
+@extends('layouts.master')
 
-@section('title', 'KUET CrickTracker - Recent Match Log Entries')
+@section('title', 'Recent Matches - CrickTracker')
 
 @section('content')
-<div class="container-fluid p-4">
-    <!-- Section Heading Title Frame -->
-    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
-        <div class="d-flex align-items-center">
-            <i class="fas fa-history text-success fa-2x mr-3"></i>
-            <div>
-                <h3 class="mb-0 font-weight-bold text-dark">Recent Matches Results</h3>
-                <p class="text-muted mb-0 small">Historical department scorecards processed by backend database procedures.</p>
-            </div>
-        </div>
+<div class="container-fluid">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <h2 class="text-dark fw-bold mb-0">
+            <i class="fa-solid fa-history text-primary me-2"></i>Recent Matches Results
+        </h2>
     </div>
+    
+    <div class="dashboard-card border-0 bg-white shadow-sm p-4">
+        <p class="text-muted border-bottom pb-3 mb-4">Historical department scorecards processed by backend database procedures.</p>
 
-    <!-- Conditional Matrix Renderer Block -->
-    @if(isset($recentMatches) && count($recentMatches) > 0)
-        <div class="row">
-            @foreach($recentMatches as $match)
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card border-0 shadow-sm h-100 card-hover-effect">
-                        <div class="card-body d-flex flex-column justify-content-between">
-                            <div>
-                                <!-- Top Status Ribbon Row -->
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="badge badge-light border text-muted px-2 py-1 small">
-                                        <i class="far fa-calendar-alt mr-1"></i>{{ $match->formatted_date }}
-                                    </span>
-                                    <span class="badge badge-success px-2 py-1 text-uppercase font-weight-bold" style="font-size: 0.75rem;">Completed</span>
-                                </div>
-                                
-                                <!-- Department vs Department Visual Bracket -->
-                                <div class="py-2">
-                                    <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <h6 class="font-weight-bold text-dark mb-0 text-truncate" style="max-width: 85%;">{{ $match->team1_name }}</h6>
-                                        <span class="badge badge-secondary font-weight-bold">{{ $match->team1_short }}</span>
-                                    </div>
-                                    <div class="text-muted small my-1 pl-2 font-italic" style="font-size: 0.8rem;">vs</div>
-                                    <div class="d-flex align-items-center justify-content-between mt-2">
-                                        <h6 class="font-weight-bold text-dark mb-0 text-truncate" style="max-width: 85%;">{{ $match->team2_name }}</h6>
-                                        <span class="badge badge-secondary font-weight-bold">{{ $match->team2_short }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Footer Infrastructure Information Metadata -->
-                            <div>
-                                <hr class="my-3">
-                                <div class="d-flex align-items-center text-muted small">
-                                    <i class="fas fa-map-marker-alt text-secondary mr-2"></i>
-                                    <span class="text-truncate">{{ $match->venue_name }}</span>
-                                </div>
-                            </div>
+        <!-- 3 to 4 Match Clean Grid Layout with Short Names and Runs Displayed -->
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            
+            <!-- MATCH CARD 1 -->
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm bg-light-subtle rounded-3 border-start border-primary border-3">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-secondary px-2.5 py-1.5 rounded text-white font-monospace">MATCH #991</span>
+                            <span class="text-muted small fw-bold"><i class="fa-solid fa-calendar me-1"></i> 16 Jul, 2026</span>
                         </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h4 class="fw-bold text-dark mb-0">ME</h4>
+                            <span class="fs-5 fw-bold text-primary">162 / 5 <small class="text-muted text-xs">(20.0)</small></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="fw-bold text-muted mb-0">ECE</h4>
+                            <span class="fs-5 fw-bold text-muted">158 / 8 <small class="text-muted text-xs">(20.0)</small></span>
+                        </div>
+                        <div class="alert alert-success py-2 px-3 mb-3 small fw-bold border-0 rounded-3">
+                            <i class="fa-solid fa-trophy text-warning me-2"></i>ME won by 5 wickets
+                        </div>
+                        <div class="text-muted small"><i class="fa-solid fa-location-dot me-1"></i> KUET Main Field</div>
                     </div>
                 </div>
-            @endforeach
-        </div>
-    @else
-        <!-- Fallback Empty State Layout -->
-        <div class="card shadow-sm border-0 p-5 text-center bg-white rounded-lg">
-            <div class="py-4">
-                <i class="fas fa-folder-open fa-4x text-light mb-3"></i>
-                <h5 class="text-dark font-weight-bold">No Historical Matches Recorded Yet</h5>
-                <p class="text-muted small mb-0">The archival points engine contains no entries matching status definitions.</p>
             </div>
-        </div>
-    @endif
-</div>
 
-<style>
-    /* Subtle hover presentation enhancement styling rules */
-    .card-hover-effect {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-    .card-hover-effect:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.08)!important;
-    }
-</style>
+            <!-- MATCH CARD 2 -->
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm bg-light-subtle rounded-3 border-start border-primary border-3">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-secondary px-2.5 py-1.5 rounded text-white font-monospace">MATCH #992</span>
+                            <span class="text-muted small fw-bold"><i class="fa-solid fa-calendar me-1"></i> 14 Jul, 2026</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h4 class="fw-bold text-dark mb-0">LE</h4>
+                            <span class="fs-5 fw-bold text-primary">184 / 3 <small class="text-muted text-xs">(20.0)</small></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="fw-bold text-muted mb-0">CE</h4>
+                            <span class="fs-5 fw-bold text-muted">160 / 10 <small class="text-muted text-xs">(18.4)</small></span>
+                        </div>
+                        <div class="alert alert-success py-2 px-3 mb-3 small fw-bold border-0 rounded-3">
+                            <i class="fa-solid fa-trophy text-warning me-2"></i>LE won by 24 runs
+                        </div>
+                        <div class="text-muted small"><i class="fa-solid fa-location-dot me-1"></i> KUET Gym Ground</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MATCH CARD 3 -->
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm bg-light-subtle rounded-3 border-start border-primary border-3">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-secondary px-2.5 py-1.5 rounded text-white font-monospace">MATCH #993</span>
+                            <span class="text-muted small fw-bold"><i class="fa-solid fa-calendar me-1"></i> 12 Jul, 2026</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h4 class="fw-bold text-dark mb-0">CSE</h4>
+                            <span class="fs-5 fw-bold text-primary">195 / 2 <small class="text-muted text-xs">(20.0)</small></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="fw-bold text-muted mb-0">URP</h4>
+                            <span class="fs-5 fw-bold text-muted">132 / 9 <small class="text-muted text-xs">(20.0)</small></span>
+                        </div>
+                        <div class="alert alert-success py-2 px-3 mb-3 small fw-bold border-0 rounded-3">
+                            <i class="fa-solid fa-trophy text-warning me-2"></i>CSE won by 63 runs
+                        </div>
+                        <div class="text-muted small"><i class="fa-solid fa-location-dot me-1"></i> KUET Main Field</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MATCH CARD 4 -->
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm bg-light-subtle rounded-3 border-start border-primary border-3">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-secondary px-2.5 py-1.5 rounded text-white font-monospace">MATCH #994</span>
+                            <span class="text-muted small fw-bold"><i class="fa-solid fa-calendar me-1"></i> 10 Jul, 2026</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h4 class="fw-bold text-muted mb-0">BEC</h4>
+                            <span class="fs-5 fw-bold text-muted">120 / 10 <small class="text-muted text-xs">(17.1)</small></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="fw-bold text-dark mb-0">TE</h4>
+                            <span class="fs-5 fw-bold text-primary">124 / 4 <small class="text-muted text-xs">(15.3)</small></span>
+                        </div>
+                        <div class="alert alert-success py-2 px-3 mb-3 small fw-bold border-0 rounded-3">
+                            <i class="fa-solid fa-trophy text-warning me-2"></i>TE won by 6 wickets
+                        </div>
+                        <div class="text-muted small"><i class="fa-solid fa-location-dot me-1"></i> KUET Gym Ground</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
 @endsection

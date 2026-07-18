@@ -1,78 +1,102 @@
-@extends('layouts.master') <!-- Extends your main master layout framework -->
+@extends('layouts.master')
 
-@section('title', 'KUET CrickTracker - Live Dashboard')
+@section('title', 'Dashboard - CrickTracker KUET')
 
 @section('content')
-<div class="container-fluid p-4">
-    <!-- Top Hero Welcome Banner Component -->
-    <div class="bg-primary text-white p-4 rounded mb-4 shadow-sm" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-        <h2 class="font-weight-bold">Welcome to CrickTracker KUET</h2>
-        <p class="mb-0 text-white-50">The official live cricket tracking system for Khulna University of Engineering & Technology.</p>
+<div class="container-fluid">
+    <!-- Welcome Hero -->
+    <div class="welcome-hero mb-4">
+        <h2>Welcome to CrickTracker KUET</h2>
+        <p class="mb-0">The official live cricket tracking system for Khulna University of Engineering & Technology.</p>
     </div>
 
     <div class="row">
-        <!-- Live Ongoing Action Panel -->
-        <div class="col-lg-8 mb-4">
-            <div class="card shadow-sm h-100 border-0">
-                <div class="card-header bg-white font-weight-bold text-danger d-flex align-items-center border-bottom-0 pt-3">
-                    <span class="spinner-grow spinner-grow-sm text-danger mr-2" role="status" aria-hidden="true"></span>
-                    Live Ongoing Action
-                </div>
-                <div class="card-body d-flex align-items-center justify-content-center" style="min-height: 200px;">
-                    @if(isset($liveMatch) && $liveMatch)
-                        <div class="text-center w-100 p-3">
-                            <div class="d-flex justify-content-center align-items-center mb-3">
-                                <h3 class="font-weight-bold text-dark px-3 mb-0">{{ strtoupper($liveMatch['team1_short']) }}</h3>
-                                <span class="badge badge-light text-muted font-weight-bold mx-2">VS</span>
-                                <h3 class="font-weight-bold text-dark px-3 mb-0">{{ strtoupper($liveMatch['team2_short']) }}</h3>
+        <!-- Left Column: Live Matches -->
+        <div class="col-lg-8">
+            <div class="dashboard-card border-0 bg-white shadow-sm p-4">
+                <h4 class="mb-4 text-danger fw-bold d-flex align-items-center">
+                    <i class="fa-solid fa-circle-dot animate-pulse me-2"></i>Live Ongoing Action
+                </h4>
+
+                <!-- PREMIUM LIVE MATCH CARD -->
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3" style="background: linear-gradient(145deg, #ffffff, #f8fafc); border-left: 5px solid #dc3545 !important;">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3 px-4 border-0">
+                        <span class="fw-bold tracking-wider text-uppercase small"><i class="fa-solid fa-tower-broadcast text-danger me-2"></i>MATCH #999 — LIVE</span>
+                        <span class="badge bg-danger px-3 py-2 fw-bold animate-pulse rounded-pill">OVER 16.2</span>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row align-items-center text-center">
+                            <!-- Team 1 -->
+                            <div class="col-md-5">
+                                <h1 class="fw-extrabold text-dark display-6 mb-1">CSE</h1>
+                                <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-bold small">BATTING</span>
+                                <h2 class="mt-3 text-primary fw-bold display-5">145 / 4</h2>
+                                <p class="text-muted small mb-0">(16.2 Overs)</p>
                             </div>
-                            <p class="text-muted mb-3"><i class="fas fa-map-marker-alt mr-1"></i> {{ $liveMatch['venue_name'] }}</p>
-                            <span class="badge badge-danger p-2 px-3 shadow-sm" style="font-size: 0.9rem;">
-                                Toss: {{ strtoupper($liveMatch['toss_decision']) }} elected to bat first
-                            </span>
+                            <!-- VS Splitter -->
+                            <div class="col-md-2 my-4 my-md-0">
+                                <div class="d-inline-block bg-light border rounded-circle p-3 shadow-sm">
+                                    <span class="fw-bold text-muted px-1">VS</span>
+                                </div>
+                            </div>
+                            <!-- Team 2 -->
+                            <div class="col-md-5">
+                                <h1 class="fw-extrabold text-muted display-6 mb-1">EEE</h1>
+                                <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill fw-bold small">BOWLING</span>
+                                <h2 class="mt-3 text-muted fw-bold display-5">-- / --</h2>
+                                <p class="text-muted small mb-0">(Yet to Bat)</p>
+                            </div>
                         </div>
-                    @else
-                        <div class="text-muted text-center p-4">
-                            <i class="fas fa-calendar-times fa-3x mb-3 text-light"></i>
-                            <p class="mb-0 font-weight-bold">No matches are currently active right now.</p>
-                            <small class="text-muted">Check back later when departmental iterations begin.</small>
+                        
+                        <div class="border-top mt-4 pt-3 d-flex flex-wrap justify-content-between align-items-center text-muted small gap-2">
+                            <span><i class="fa-solid fa-location-dot text-secondary me-1"></i> KUET Main Playground</span>
+                            <span class="bg-light px-3 py-1 rounded-pill border"><strong>Toss:</strong> EEE won toss & elected to bowl first</span>
                         </div>
-                    @endif
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Hand Metrics Summary Cards -->
-        <div class="col-lg-4 mb-4">
-            <!-- Latest Result Summary Card -->
-            <div class="card shadow-sm mb-4 border-0">
-                <div class="card-header bg-white font-weight-bold text-dark border-bottom-0 pt-3">
-                    Latest Result Summary
+        <!-- Right Column: Sidebar Summaries -->
+        <div class="col-lg-4">
+            <!-- Latest Result Summary Sidebar Widget -->
+            <div class="dashboard-card border-0 bg-white shadow-sm p-4 mb-4">
+                <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                    <i class="fa-solid fa-square-poll-horizontal text-primary me-2"></i>Latest Results
+                </h5>
+                <div class="p-3 bg-light rounded-3 border-start border-success border-3 mb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-dark">ME (162/5)</span>
+                        <span class="badge bg-success-subtle text-success rounded-pill px-2">Won</span>
+                    </div>
+                    <div class="text-muted small mb-1">vs ECE (158/8)</div>
+                    <div class="text-success small fw-semibold"><i class="fa-solid fa-trophy me-1"></i> ME won by 5 wickets</div>
                 </div>
-                <div class="card-body">
-                    @if(isset($latestResult) && $latestResult)
-                        <div class="p-2 border rounded bg-light mb-2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="font-weight-bold text-primary">{{ $latestResult['team1_short'] }} vs {{ $latestResult['team2_short'] }}</span>
-                                <span class="badge badge-success text-uppercase">Finished</span>
-                            </div>
-                        </div>
-                        <small class="text-muted d-block mt-2">Historical logging sync complete via Oracle Engine.</small>
-                    @else
-                        <div class="text-center p-3 text-muted">
-                            <p class="mb-0 small">No historical summary data available.</p>
-                        </div>
-                    @endif
+                <div class="p-3 bg-light rounded-3 border-start border-success border-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-dark">LE (184/3)</span>
+                        <span class="badge bg-success-subtle text-success rounded-pill px-2">Won</span>
+                    </div>
+                    <div class="text-muted small mb-1">vs CE (160/10)</div>
+                    <div class="text-success small fw-semibold"><i class="fa-solid fa-trophy me-1"></i> LE won by 24 runs</div>
                 </div>
             </div>
 
-            <!-- Context Highlight Information Component -->
-            <div class="card shadow-sm border-0 bg-light">
-                <div class="card-body p-3">
-                    <h6 class="font-weight-bold text-dark"><i class="fas fa-bolt text-warning mr-2"></i>Quick Highlights</h6>
-                    <hr class="my-2">
-                    <p class="small text-muted mb-0">KUET Inter-Department Cricket League execution context finalized inside database parameters.</p>
-                </div>
+            <!-- Quick Highlights Feed -->
+            <div class="dashboard-card border-0 bg-white shadow-sm p-4">
+                <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                    <i class="fa-solid fa-bolt text-warning me-2"></i>Quick Highlights
+                </h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2 pb-2 border-bottom last-border-0">
+                        <a href="#" class="text-decoration-none text-dark fw-semibold d-block small">Inter-Dept Tournament kicks off next week!</a>
+                        <small class="text-muted">Today, 10:00 AM</small>
+                    </li>
+                    <li class="mb-2 pb-2 border-bottom last-border-0">
+                        <a href="#" class="text-decoration-none text-dark fw-semibold d-block small">ECE secures a thrilling last-ball victory over CSE.</a>
+                        <small class="text-muted">Yesterday</small>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
