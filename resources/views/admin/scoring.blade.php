@@ -3,116 +3,297 @@
 @section('title', 'Live Scoring Panel - CrickTracker')
 
 @section('content')
-<div class="flex flex-col lg:flex-row gap-8">
-    <div class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-6 md:p-8">
-        <div class="mb-6">
-            <h2 class="text-2xl font-bold text-white tracking-tight">Log Current Ball Outcome</h2>
-            <p class="text-slate-400 text-sm mt-1">Submit dynamic data parameters directly downstream to active transactional packages.</p>
+<div class="space-y-6">
+    <!-- Top Context Header Breadcrumb Section -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-800 pb-5 gap-4">
+        <div>
+            <h2 class="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                <span>Live Console:</span>
+                <span class="text-emerald-400">
+                    {{ $activeMatch->team1_name ?? $activeMatch->TEAM1_NAME ?? 'CSE' }} 
+                    <span class="text-slate-500 font-light text-xl lowercase mx-1">vs</span> 
+                    {{ $activeMatch->team2_name ?? $activeMatch->TEAM2_NAME ?? 'CE' }}
+                </span>
+            </h2>
+            <p class="text-slate-400 text-sm mt-1">Manage transactional ball events, coordinate dynamic line-ups, and stream live analytical modules downstream.</p>
         </div>
+        <div>
+            <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center space-x-2 text-sm bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-4 py-2.5 rounded-xl transition font-medium">
+                <span>← Exit Control Room</span>
+            </a>
+        </div>
+    </div>
 
-        <form action="{{ route('admin.matches.storeBall') }}" method="POST" class="space-y-6">
-            @csrf
-            <input type="hidden" name="match_id" value="{{ $activeMatch->match_id ?? $activeMatch->MATCH_ID ?? 1 }}">
-            <input type="hidden" name="innings" value="{{ $activeMatch->current_innings ?? $activeMatch->CURRENT_INNINGS ?? 1 }}">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="batsman_id" class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">On-Strike Batsman</label>
-                    <select id="batsman_id" name="batsman_id" required class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white rounded-xl px-4 py-3 text-sm font-medium transition outline-none">
-                        <option value="" disabled selected>Select Batsman</option>
-                        @foreach($battingSquad ?? [] as $player)
-                            <option value="{{ $player->player_id ?? $player->PLAYER_ID }}">{{ $player->player_name ?? $player->PLAYER_NAME }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label for="bowler_id" class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">Active Bowler</label>
-                    <select id="bowler_id" name="bowler_id" required class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white rounded-xl px-4 py-3 text-sm font-medium transition outline-none">
-                        <option value="" disabled selected>Select Bowler</option>
-                        @foreach($bowlingSquad ?? [] as $player)
-                            <option value="{{ $player->player_id ?? $player->PLAYER_ID }}">{{ $player->player_name ?? $player->PLAYER_NAME }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-
+    <!-- Active Lineup Management Panel Dropdowns Area -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex items-center space-x-2 text-slate-400 text-xs font-bold uppercase tracking-wider">
+            <span>👥 Active Lineup Management</span>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-                <label class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">Runs Scored From Bat</label>
-                <div class="grid grid-cols-6 gap-3">
-                    @foreach([0,1,2,3,4,6] as $run)
-                        <label class="cursor-pointer group">
-                            <input type="radio" name="runs_scored" value="{{ $run }}" class="sr-only peer" {{ $run == 0 ? 'checked' : '' }}>
-                            <div class="bg-slate-950 border border-slate-700 text-white text-center py-3 rounded-xl font-bold transition group-hover:bg-slate-800 peer-checked:bg-emerald-500 peer-checked:text-slate-950 peer-checked:border-emerald-500 text-base shadow-sm">
-                                {{ $run }}
-                            </div>
-                        </label>
+                <label for="batsman_id" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Batsman (On Strike)</label>
+                <select id="batsman_id" name="lineup_batsman" form="ballScoringForm" required class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white rounded-xl px-4 py-3 text-sm transition outline-none">
+                    <option value="" disabled selected>Select Striker</option>
+                    @foreach($battingSquad ?? [] as $player)
+                        <option value="{{ $player->player_id ?? $player->PLAYER_ID }}">{{ $player->player_name ?? $player->PLAYER_NAME ?? ($player->first_name ?? '').' '.($player->last_name ?? '') }}</option>
                     @endforeach
-                </div>
+                </select>
             </div>
+            <div>
+                <label for="non_striker_id" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Batsman (Off Strike)</label>
+                <select id="non_striker_id" name="non_striker_id" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white rounded-xl px-4 py-3 text-sm transition outline-none">
+                    <option value="" disabled selected>Select Non-Striker</option>
+                    @foreach($battingSquad ?? [] as $player)
+                        <option value="{{ $player->player_id ?? $player->PLAYER_ID }}">{{ $player->player_name ?? $player->PLAYER_NAME ?? ($player->first_name ?? '').' '.($player->last_name ?? '') }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label for="bowler_id" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Current Bowler</label>
+                <select id="bowler_id" name="bowler_id" form="ballScoringForm" required class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white rounded-xl px-4 py-3 text-sm transition outline-none">
+                    <option value="" disabled selected>Select Bowler</option>
+                    @foreach($bowlingSquad ?? [] as $player)
+                        <option value="{{ $player->player_id ?? $player->PLAYER_ID }}">{{ $player->player_name ?? $player->PLAYER_NAME ?? ($player->first_name ?? '').' '.($player->last_name ?? '') }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-2">
-                    <label for="extra_type" class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">Extras Registry</label>
-                    <div class="flex space-x-3">
-                        <select id="extra_type" name="extra_type" class="bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white rounded-xl px-4 py-3 text-sm font-medium transition outline-none flex-1">
-                            <option value="">None (Normal Delivery)</option>
-                            <option value="WIDE">Wide Ball</option>
-                            <option value="NOBALL">No Ball</option>
-                            <option value="BYE">Bye</option>
-                            <option value="LEGBYE">Leg Bye</option>
-                        </select>
-                        <input type="number" name="extra_runs" value="0" min="0" max="10" aria-label="Extra Runs Amount" class="w-20 text-center bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white rounded-xl py-3 text-sm font-bold outline-none">
+    <!-- Main Workspace Split Section Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Left Side: Digital Scoreboard Summary and Metrics Profile -->
+        <div class="lg:col-span-5 space-y-6">
+            <!-- Large Primary Neon Dashboard Block -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center shadow-2xl relative overflow-hidden">
+                <div class="absolute top-4 left-4 bg-emerald-950 border border-emerald-500/30 text-emerald-400 font-bold px-3 py-1 rounded-full text-2xs uppercase tracking-widest">
+                    Innings {{ $activeMatch->current_innings ?? $activeMatch->CURRENT_INNINGS ?? 1 }} Active
+                </div>
+                
+                <div class="mt-6 mb-2">
+                    <span class="text-xs uppercase tracking-widest font-bold text-slate-400 block mb-1">Batting: <span class="text-amber-400 font-black">{{ $activeMatch->team1_short_name ?? $activeMatch->TEAM1_SHORT_NAME ?? 'CSE' }}</span></span>
+                    <div class="text-7xl font-black text-white tracking-tighter my-2 selection:bg-emerald-500">
+                        {{ $activeMatch->team1_score ?? $activeMatch->TEAM1_SCORE ?? 0 }} <span class="text-slate-600 font-light">/</span> {{ $activeMatch->team1_wickets ?? $activeMatch->TEAM1_WICKETS ?? 0 }}
+                    </div>
+                    <div class="text-base font-semibold text-slate-400 mt-2">
+                        Overs: <span class="text-emerald-400 font-mono">{{ number_format($activeMatch->team1_overs ?? $activeMatch->TEAM1_OVERS ?? 0.0, 1) }}</span>
                     </div>
                 </div>
-                <div>
-                    <label for="wicket_type" class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">Wicket Outcome</label>
-                    <select id="wicket_type" name="wicket_type" class="w-full bg-slate-950 border border-slate-700 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-white rounded-xl px-4 py-3 text-sm font-medium transition outline-none">
-                        <option value="">Not Out / Safe Delivery</option>
-                        <option value="BOWLED">Bowled</option>
-                        <option value="CAUGHT">Caught Out</option>
-                        <option value="LBW">L.B.W.</option>
-                        <option value="RUNOUT">Run Out</option>
-                        <option value="STUMPED">Stumped</option>
-                    </select>
+            </div>
+
+            <!-- Current Live Performers Tracker Module -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2 flex items-center gap-1.5">
+                    <span>⚡</span><span>Current Live Performers</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="text-slate-500 uppercase border-b border-slate-800/60">
+                                <th class="py-2 font-bold">Batsman</th>
+                                <th class="py-2 text-center font-bold">R</th>
+                                <th class="py-2 text-center font-bold">B</th>
+                                <th class="py-2 text-center font-bold">4s</th>
+                                <th class="py-2 text-center font-bold">6s</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300 divide-y divide-slate-800/40">
+                            <tr>
+                                <td class="py-2.5 font-semibold text-white">Asif *</td>
+                                <td class="py-2.5 text-center font-mono">13</td>
+                                <td class="py-2.5 text-center font-mono">3</td>
+                                <td class="py-2.5 text-center font-mono">0</td>
+                                <td class="py-2.5 text-center font-mono">2</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 font-medium text-slate-400">Tahmid</td>
+                                <td class="py-2.5 text-center font-mono text-slate-400">15</td>
+                                <td class="py-2.5 text-center font-mono text-slate-400">3</td>
+                                <td class="py-2.5 text-center font-mono text-slate-400">0</td>
+                                <td class="py-2.5 text-center font-mono text-slate-400">2</td>
+                            </tr>
+                            <tr class="text-slate-500 uppercase border-b border-slate-800/60 font-bold text-2xs">
+                                <th class="pt-4 pb-1" colspan="2">Bowler</th>
+                                <th class="pt-4 pb-1 text-center">O</th>
+                                <th class="pt-4 pb-1 text-center">R</th>
+                                <th class="pt-4 pb-1 text-center">W</th>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 font-semibold text-white" colspan="2">Sami</td>
+                                <td class="py-2.5 text-center font-mono">1.0</td>
+                                <td class="py-2.5 text-center font-mono">28</td>
+                                <td class="py-2.5 text-center font-mono text-emerald-400 font-bold">0</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div>
-                <label for="description" class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">Ball Commentary Feed Text</label>
-                <textarea id="description" name="description" placeholder="Describe the action event outcome briefly for the marquee live feed..." rows="3" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white placeholder-slate-600 rounded-xl p-4 text-sm font-medium transition outline-none resize-none"></textarea>
-            </div>
-
-            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-bold uppercase tracking-wider py-4 rounded-xl transition shadow-lg shadow-emerald-500/10 active:translate-y-px">
-                ⚡ Transmit Event to Oracle Instance
-            </button>
-        </form>
-    </div>
-
-    <!-- Live Side Metrics Panel -->
-    <div class="w-full lg:w-96 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-6 flex flex-col justify-between max-h-[500px]">
-        <div>
-            <span class="text-xs font-bold uppercase tracking-widest text-slate-500 block">Live State Tracker</span>
-            <h3 class="text-xl font-bold text-white mt-1 border-b border-slate-800 pb-4">
-                {{ $activeMatch->team1_short_name ?? $activeMatch->TEAM1_SHORT_NAME ?? 'TEAM 1' }} 
-                <span class="text-slate-500 text-sm font-medium mx-1">vs</span> 
-                {{ $activeMatch->team2_short_name ?? $activeMatch->TEAM2_SHORT_NAME ?? 'TEAM 2' }}
-            </h3>
-            
-            <div class="py-8 text-center">
-                <span class="text-xs font-bold tracking-wider text-slate-400 uppercase block mb-1">Current Score Metrics</span>
-                <div class="text-6xl font-black text-white tracking-tight">
-                    {{ $activeMatch->team1_score ?? $activeMatch->TEAM1_SCORE ?? 0 }}<span class="text-slate-500 font-light">/</span>{{ $activeMatch->team1_wickets ?? $activeMatch->TEAM1_WICKETS ?? 0 }}
+            <!-- Match Board Total Summary Profile -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2">
+                    📋 Match Board Summary
                 </div>
-                <span class="inline-block bg-slate-950 border border-slate-800 text-slate-300 rounded-full px-4 py-1.5 text-xs font-semibold mt-4">
-                    Overs Logged: {{ number_format($activeMatch->team1_overs ?? $activeMatch->TEAM1_OVERS ?? 0.0, 1) }}
-                </span>
+                <div class="space-y-2 text-xs font-medium">
+                    <div class="flex justify-between items-center py-0.5">
+                        <span class="text-slate-400">1st Inns ({{ $activeMatch->team1_short_name ?? $activeMatch->TEAM1_SHORT_NAME ?? 'CSE' }}):</span>
+                        <span class="text-white font-bold font-mono text-sm">{{ $activeMatch->team1_score ?? $activeMatch->TEAM1_SCORE ?? 0 }}/{{ $activeMatch->team1_wickets ?? $activeMatch->TEAM1_WICKETS ?? 0 }} ({{ number_format($activeMatch->team1_overs ?? $activeMatch->TEAM1_OVERS ?? 0.0, 1) }} Ov)</span>
+                    </div>
+                    <div class="flex justify-between items-center py-0.5">
+                        <span class="text-slate-400">2nd Inns ({{ $activeMatch->team2_short_name ?? $activeMatch->TEAM2_SHORT_NAME ?? 'CE' }}):</span>
+                        <span class="text-slate-500 font-bold font-mono text-sm">0/0 (0.0 Ov)</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-2 text-xs">
-            <div class="flex justify-between"><span class="text-slate-400">Match Status:</span><span class="text-emerald-400 font-bold uppercase">{{ $activeMatch->match_status ?? $activeMatch->MATCH_STATUS ?? 'Live' }}</span></div>
-            <div class="flex justify-between"><span class="text-slate-400">Current Innings:</span><span class="text-white font-mono font-semibold">{{ $activeMatch->current_innings ?? $activeMatch->CURRENT_INNINGS ?? 1 }}</span></div>
+        <!-- Right Side: Rapid Input Core Operations Matrix Layout Panel -->
+        <div class="lg:col-span-7 space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                
+                <!-- Main Processing Scoring Processing Form -->
+                <form id="ballScoringForm" action="{{ route('admin.matches.storeBall') }}" method="POST" class="space-y-6">
+                    @csrf
+                    <input type="hidden" name="match_id" value="{{ $activeMatch->match_id ?? $activeMatch->MATCH_ID ?? 1 }}">
+                    <input type="hidden" name="innings" value="{{ $activeMatch->current_innings ?? $activeMatch->CURRENT_INNINGS ?? 1 }}">
+
+                    <!-- Visual Configuration Interface: Clickable Touch Grid -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Rapid Input Matrix (Select Ball Event)</label>
+                        
+                        <!-- Top Rows Area: Runs & Boundaries -->
+                        <div class="grid grid-cols-3 gap-3 mb-3">
+                            <button type="button" onclick="setBallOutcome(0, '', 0, '')" class="bg-slate-950 hover:bg-slate-800 border border-slate-700 text-white py-4 rounded-xl font-bold transition text-sm shadow-md active:scale-[0.98]">
+                                Dot Ball
+                            </button>
+                            <button type="button" onclick="setBallOutcome(1, '', 0, '')" class="bg-blue-600 hover:bg-blue-500 border border-blue-500 text-white py-4 rounded-xl font-bold transition text-sm shadow-md active:scale-[0.98]">
+                                +1 Run
+                            </button>
+                            <button type="button" onclick="setBallOutcome(2, '', 0, '')" class="bg-blue-600 hover:bg-blue-500 border border-blue-500 text-white py-4 rounded-xl font-bold transition text-sm shadow-md active:scale-[0.98]">
+                                +2 Runs
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-3 mb-3">
+                            <button type="button" onclick="setBallOutcome(3, '', 0, '')" class="bg-blue-600 hover:bg-blue-500 border border-blue-500 text-white py-4 rounded-xl font-bold transition text-sm shadow-md active:scale-[0.98]">
+                                +3 Runs
+                            </button>
+                            <button type="button" onclick="setBallOutcome(4, '', 0, '')" class="bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 text-white py-4 rounded-xl font-black transition text-sm shadow-md active:scale-[0.98]">
+                                4 (FOUR)
+                            </button>
+                            <button type="button" onclick="setBallOutcome(5, '', 0, '')" class="bg-blue-600 hover:bg-blue-500 border border-blue-500 text-white py-4 rounded-xl font-bold transition text-sm shadow-md active:scale-[0.98]">
+                                +5 Runs
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3 mb-3">
+                            <button type="button" onclick="setBallOutcome(6, '', 0, '')" class="bg-cyan-500 hover:bg-cyan-400 border border-cyan-500 text-slate-950 py-4 rounded-xl font-black transition text-sm shadow-md active:scale-[0.98] col-span-1">
+                                6 (SIX)
+                            </button>
+                            <button type="button" onclick="setBallOutcome(0, 'WIDE', 1, '')" class="bg-amber-500 hover:bg-amber-400 border border-amber-500 text-slate-950 py-4 rounded-xl font-bold transition text-sm shadow-md active:scale-[0.98]">
+                                Wide
+                            </button>
+                            <button type="button" onclick="setBallOutcome(0, 'NOBALL', 1, '')" class="bg-amber-500 hover:bg-amber-400 border border-amber-500 text-slate-950 py-4 rounded-xl font-bold transition text-sm shadow-md active:scale-[0.98]">
+                                No Ball
+                            </button>
+                        </div>
+
+                        <!-- Crimson Out/Wicket Button Component -->
+                        <div class="mb-6">
+                            <button type="button" onclick="setBallOutcome(0, '', 0, 'BOWLED')" class="w-full bg-rose-600 hover:bg-rose-500 border border-rose-500 text-white py-4 rounded-xl font-black uppercase tracking-wider transition text-sm shadow-md active:scale-[0.98]">
+                                OUT / Wicket Fall
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Input Fields Matrix Form Elements -->
+                    <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl space-y-4">
+                        <div class="text-2xs font-bold uppercase tracking-widest text-slate-500">Form Selection Overview</div>
+                        
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label for="runs_scored" class="block text-2xs text-slate-400 font-bold uppercase mb-1">Bat Runs</label>
+                                <input type="number" id="runs_scored" name="runs_scored" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-bold text-center text-sm text-white text-mono outline-none">
+                            </div>
+                            <div>
+                                <label for="extra_type" class="block text-2xs text-slate-400 font-bold uppercase mb-1">Extra Type</label>
+                                <select id="extra_type" name="extra_type" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-bold text-xs text-white outline-none">
+                                    <option value="">NONE</option>
+                                    <option value="WIDE">WIDE</option>
+                                    <option value="NOBALL">NOBALL</option>
+                                    <option value="BYE">BYE</option>
+                                    <option value="LEGBYE">LEGBYE</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="extra_runs" class="block text-2xs text-slate-400 font-bold uppercase mb-1">Extra Runs</label>
+                                <input type="number" id="extra_runs" name="extra_runs" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-bold text-center text-sm text-white text-mono outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="wicket_type" class="block text-2xs text-slate-400 font-bold uppercase mb-1">Wicket Registry</label>
+                            <select id="wicket_type" name="wicket_type" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-bold text-xs text-white outline-none">
+                                <option value="">NOT OUT</option>
+                                <option value="BOWLED">BOWLED</option>
+                                <option value="CAUGHT">CAUGHT OUT</option>
+                                <option value="LBW">L.B.W.</option>
+                                <option value="RUNOUT">RUN OUT</option>
+                                <option value="STUMPED">STUMPED</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Commentary Description Field Area Box -->
+                    <div>
+                        <label for="description" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Ball Commentary Feed Text</label>
+                        <textarea id="description" name="description" placeholder="Describe the action event outcome briefly for the marquee live feed..." rows="2" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white placeholder-slate-600 rounded-xl p-4 text-sm transition outline-none resize-none"></textarea>
+                    </div>
+
+                    <!-- Submit Primary Processing Button Component -->
+                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-bold uppercase tracking-wider py-4 rounded-xl transition shadow-lg shadow-emerald-500/10 active:translate-y-px">
+                        ⚡ Transmit Event to Oracle Instance
+                    </button>
+                </form>
+
+                <!-- Lower Innings Management Footnotes Row Control Panel Grid -->
+                <div class="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-800/80">
+                    <button type="button" class="bg-slate-950 hover:bg-slate-800 border border-slate-700 text-white text-xs font-bold uppercase tracking-wider py-3 px-4 rounded-xl transition text-center">
+                        End 1st Innings
+                    </button>
+                    <button type="button" class="bg-transparent hover:bg-rose-950/20 border border-rose-500/30 hover:border-rose-500/50 text-rose-500 text-xs font-bold uppercase tracking-wider py-3 px-4 rounded-xl transition text-center">
+                        Reset All
+                    </button>
+                </div>
+
+            </div>
         </div>
+
     </div>
 </div>
+
+<!-- Inline JavaScript Event Mapper Logic Setup -->
+<script>
+    /**
+     * Updates the form input selections synchronously upon button matrix click events.
+     */
+    function setBallOutcome(runs, extraType, extraRuns, wicketType) {
+        document.getElementById('runs_scored').value = runs;
+        document.getElementById('extra_type').value = extraType;
+        document.getElementById('extra_runs').value = extraRuns;
+        document.getElementById('wicket_type').value = wicketType;
+        
+        // Auto-generate helper commentary templates for rapid submission loops
+        const genericFeed = document.getElementById('description');
+        if(wicketType !== '') {
+            genericFeed.value = "OUT! Wicket fall event recorded. Delivery resulting in standard " + wicketType.toLowerCase() + " dismissal.";
+        } else if(extraType !== '') {
+            genericFeed.value = "Extra recorded. Bowler penalized for illegal " + extraType.toLowerCase() + " delivery.";
+        } else {
+            genericFeed.value = runs === 0 ? "Good delivery, dot ball logged." : runs + " run(s) scored dynamically away into space.";
+        }
+    }
+</script>
 @endsection

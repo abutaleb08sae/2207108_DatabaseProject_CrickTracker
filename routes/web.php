@@ -23,21 +23,23 @@ if (!function_exists('getGlobalCricketContext')) {
     }
 }
 
+/*
+|--------------------------------------------------------------------------
+| Public Facing Front-End Workspace Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/', function () {
     $context = getGlobalCricketContext();
     
-    // Select all available columns from the view to prevent ORA-00904 column mismatches
     $rawLiveMatches = DB::select("
         SELECT * 
         FROM vw_live_scorecard 
-        WHERE match_status = 'Live'
+        WHERE UPPER(match_status) = 'LIVE'
     ");
 
-    // Map the results to ensure that all properties expected by welcome.blade.php exist
     $liveMatches = array_map(function($match) {
         $m = (array)$match;
-        
-        // Normalize keys to lowercase since Oracle returns columns in uppercase by default
         $m = array_change_key_case($m, CASE_LOWER);
 
         return (object)[
@@ -51,11 +53,11 @@ Route::get('/', function () {
             'team2_score'  => $m['team2_score'] ?? null,
             'team2_wickets'=> $m['team2_wickets'] ?? 0,
             'team2_overs'  => $m['team2_overs'] ?? '0.0',
-            'venue_name'   => $m['venue_name'] ?? $m['venue'] ?? 'Stadium'
+            'venue_name'   => $m['venue_name'] ?? $m['venue'] ?? 'KUET Ground'
         ];
     }, $rawLiveMatches);
     
-    $recentMatches = DB::select("SELECT * FROM (SELECT m.match_id, m.match_status, t1.name as team1_name, t2.name as team2_name FROM matches m LEFT JOIN teams t1 ON m.team1_id = t1.team_id LEFT JOIN teams t2 ON m.team2_id = t2.team_id WHERE m.match_status IN ('Completed', 'Abandoned') ORDER BY m.match_id DESC) WHERE ROWNUM <= 3");
+    $recentMatches = DB::select("SELECT * FROM (SELECT m.match_id, m.match_status, t1.name as team1_name, t2.name as team2_name FROM matches m LEFT JOIN teams t1 ON m.team1_id = t1.team_id LEFT JOIN teams t2 ON m.team2_id = t2.team_id WHERE UPPER(m.match_status) IN ('COMPLETED', 'ABANDONED') ORDER BY m.match_id DESC) WHERE ROWNUM <= 3");
     
     $upcomingMatches = DB::select("
         SELECT * FROM (
@@ -67,8 +69,8 @@ Route::get('/', function () {
             FROM matches m 
             LEFT JOIN teams t1 ON m.team1_id = t1.team_id 
             LEFT JOIN teams t2 ON m.team2_id = t2.team_id 
-            WHERE m.match_status = 'Scheduled' 
-            ORDER BY m.match_id ASC
+            WHERE UPPER(m.match_status) = 'SCHEDULED' 
+            ORDER BY m.match_date ASC
         ) WHERE ROWNUM <= 3
     ");
 
@@ -82,7 +84,7 @@ Route::get('/', function () {
 
 Route::get('/recent-matches', function () {
     $context = getGlobalCricketContext();
-    $recentMatches = DB::select("SELECT m.*, t1.name as team1_name, t2.name as team2_name FROM matches m LEFT JOIN teams t1 ON m.team1_id = t1.team_id LEFT JOIN teams t2 ON m.team2_id = t2.team_id WHERE m.match_status IN ('Completed', 'Abandoned') ORDER BY m.match_id DESC");
+    $recentMatches = DB::select("SELECT m.*, t1.name as team1_name, t2.name as team2_name FROM matches m LEFT JOIN teams t1 ON m.team1_id = t1.team_id LEFT JOIN teams t2 ON m.team2_id = t2.team_id WHERE UPPER(m.match_status) IN ('COMPLETED', 'ABANDONED') ORDER BY m.match_id DESC");
 
     return view('welcome', array_merge($context, [
         'currentView' => 'recent',
@@ -101,7 +103,7 @@ Route::get('/upcoming-matches', function () {
         FROM matches m
         LEFT JOIN teams t1 ON m.team1_id = t1.team_id
         LEFT JOIN teams t2 ON m.team2_id = t2.team_id
-        WHERE m.match_status = 'Scheduled'
+        WHERE UPPER(m.match_status) = 'SCHEDULED'
         ORDER BY m.match_date ASC
     ");
 
@@ -128,28 +130,48 @@ Route::get('/news', function () {
     return view('welcome', array_merge($context, ['currentView' => 'news', 'allNews' => $allNews]));
 });
 
+/*
+|--------------------------------------------------------------------------
+| Authentication Protocols
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+/*
+|--------------------------------------------------------------------------
+| Admin Command & Scoring Workspace Cluster (Oracle Connected Instance)
+|--------------------------------------------------------------------------
+*/
+
 Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
+    
+    // Core Navigation Routers
     Route::get('/', [AdminMatchController::class, 'index']);
     Route::get('/dashboard', [AdminMatchController::class, 'showLiveScoring'])->name('dashboard');
     Route::get('/matches', [AdminMatchController::class, 'showLiveScoring'])->name('matches.index');
     Route::get('/match-live', [AdminMatchController::class, 'showLiveScoring'])->name('match-live');
+    
+    // Isolated Dynamic Workspace Launchers
     Route::get('/teams', [AdminMatchController::class, 'showTeams'])->name('teams');
     Route::get('/players', [AdminMatchController::class, 'showPlayers'])->name('players');
     Route::get('/news', [AdminMatchController::class, 'showNews'])->name('news');
     Route::get('/fixtures', [AdminMatchController::class, 'showFixtures'])->name('fixtures');
     
-    Route::delete('/fixtures/{id}', [AdminMatchController::class, 'destroyFixture'])->name('fixtures.destroy');
+    // Dedicated Control Room Router Matching Dashboard Actions Explicitly
+    Route::get('/scoring/{id}', [AdminMatchController::class, 'showLiveScoring'])->name('scoring.room');
 
+    // Transaction Engine Submissions & Mutators
+    Route::delete('/fixtures/{id}', [AdminMatchController::class, 'destroyFixture'])->name('fixtures.destroy');
     Route::post('/match-live/start', [AdminMatchController::class, 'startLiveMatch'])->name('match-live.start');
     Route::post('/match-live/complete', [AdminMatchController::class, 'completeLiveMatch'])->name('match-live.complete');
     Route::post('/matches/ball-by-ball', [AdminMatchController::class, 'storeBall'])->name('matches.storeBall');
 
+    // Inline Storage Modulators Natively Parsed for Oracle Matrix
     Route::post('/teams', function(Request $request) {
         $nextIdSelect = DB::select("SELECT COALESCE(MAX(team_id), 0) + 1 as next_id FROM teams");
         $nextId = $nextIdSelect[0]->next_id ?? $nextIdSelect[0]->NEXT_ID ?? 1;

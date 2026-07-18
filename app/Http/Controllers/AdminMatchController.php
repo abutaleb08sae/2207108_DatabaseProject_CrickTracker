@@ -240,23 +240,25 @@ class AdminMatchController extends Controller
      */
     public function storeBall(Request $request)
     {
+        // Modified validation rules array to support the view layout name structure parameters
         $request->validate([
-            'match_id'    => 'required|numeric',
-            'innings'     => 'required|numeric',
-            'batsman_id'  => 'required|numeric',
-            'bowler_id'   => 'required|numeric',
-            'runs_scored' => 'required|numeric',
-            'description' => 'required|string|max:400',
-            'extra_type'  => 'nullable|string|max:20',
-            'extra_runs'  => 'nullable|numeric',
-            'wicket_type' => 'nullable|string|max:20',
+            'match_id'        => 'required|numeric',
+            'innings'         => 'required|numeric',
+            'lineup_batsman'  => 'required|numeric', // Matches the name="lineup_batsman" form input
+            'bowler_id'       => 'required|numeric',
+            'runs_scored'     => 'required|numeric',
+            'description'     => 'required|string|max:400',
+            'extra_type'      => 'nullable|string|max:20',
+            'extra_runs'      => 'nullable|numeric',
+            'wicket_type'     => 'nullable|string|max:20',
         ]);
 
         try {
+            $batsmanId   = (int)$request->lineup_batsman;
             $extraType   = !empty($request->extra_type) ? $request->extra_type : NULL;
             $extraRuns   = intval($request->extra_runs ?? 0);
             $wicketKind  = !empty($request->wicket_type) ? $request->wicket_type : NULL;
-            $dismissedId = !empty($wicketKind) ? $request->batsman_id : NULL;
+            $dismissedId = !empty($wicketKind) ? $batsmanId : NULL;
 
             DB::statement("
                 BEGIN
@@ -276,7 +278,7 @@ class AdminMatchController extends Controller
             ", [
                 'match_id'     => $request->match_id,
                 'innings'      => $request->innings,
-                'bat'          => $request->batsman_id,
+                'bat'          => $batsmanId,
                 'bowl'         => $request->bowler_id,
                 'runs'         => $request->runs_scored,
                 'ext'          => $extraRuns,
