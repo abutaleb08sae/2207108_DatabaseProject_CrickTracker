@@ -6,7 +6,11 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminMatchController;
 use App\Models\User;
+use Illuminate\Http\Request;
 
+/**
+ * Global application framework context utilities
+ */
 function getGlobalCricketContext() {
     return [
         'news' => DB::select("
@@ -21,6 +25,19 @@ function getGlobalCricketContext() {
         ")
     ];
 }
+
+function invoker_get_dashboard_data($controller) {
+    $reflection = new \ReflectionClass(get_class($controller));
+    $method = $reflection->getMethod('getDashboardData');
+    $method->setAccessible(true);
+    return $method->invoke($controller);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Public Facing Route Rules
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', function () {
     $context = getGlobalCricketContext();
@@ -112,43 +129,180 @@ Route::get('/news', function () {
     ]));
 });
 
+/*
+|--------------------------------------------------------------------------
+| Authentication Protocols
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::get('/admin/dashboard', [AdminMatchController::class, 'dashboard'])->name('admin.dashboard');
-Route::get('/admin/matches', [AdminMatchController::class, 'index'])->name('admin.matches.index');
-Route::post('/admin/matches/ball-by-ball', [AdminMatchController::class, 'storeBall'])->name('admin.matches.storeBall');
+/*
+|--------------------------------------------------------------------------
+| Admin Engine Workspace Operations
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/admin/teams', function() {
-    $adminController = new AdminMatchController();
-    $data = invoker_get_dashboard_data($adminController);
-    return view('admin.dashboard', array_merge($data, ['currentAdminSubView' => 'teams']));
-})->name('admin.teams');
+Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
+    
+    // Core Dashboard & Core Match Workpanes
+    Route::get('/dashboard', [AdminMatchController::class, 'dashboard'])->name('dashboard');
+    Route::get('/matches', [AdminMatchController::class, 'index'])->name('matches.index');
+    Route::post('/matches/ball-by-ball', [AdminMatchController::class, 'storeBall'])->name('matches.storeBall');
 
-Route::get('/admin/players', function() {
-    $adminController = new AdminMatchController();
-    $data = invoker_get_dashboard_data($adminController);
-    return view('admin.dashboard', array_merge($data, ['currentAdminSubView' => 'players']));
-})->name('admin.players');
+    // 1. Live Scoring Panel Route Mapping
+    Route::get('/match-live', function() {
+        $adminController = new AdminMatchController();
+        $data = invoker_get_dashboard_data($adminController);
+        return view('admin.dashboard', array_merge($data, ['currentAdminSubView' => 'scoring']));
+    })->name('match-live');
 
-Route::get('/admin/fixtures', function() {
-    $adminController = new AdminMatchController();
-    $data = invoker_get_dashboard_data($adminController);
-    return view('admin.dashboard', array_merge($data, ['currentAdminSubView' => 'fixtures']));
-})->name('admin.fixtures');
+    // 2. Franchise Management (Teams) Workspace Routes
+    Route::get('/teams', function() {
+        $adminController = new AdminMatchController();
+        $data = invoker_get_dashboard_data($adminController);
+        $realTeams = DB::select("SELECT team_id, name, short_name FROM teams ORDER BY team_id ASC");
+        return view('admin.dashboard', array_merge($data, [
+            'currentAdminSubView' => 'teams',
+            'realTeams' => $realTeams
+        ]));
+    })->name('teams');
 
-Route::get('/admin/match-live', function() {
-    $adminController = new AdminMatchController();
-    $data = invoker_get_dashboard_data($adminController);
-    return view('admin.dashboard', array_merge($data, ['currentAdminSubView' => 'scoring']));
-})->name('admin.match-live');
+    Route::post('/teams', function(Request $request) {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'short_name' => 'required|string|max:10'
+        ]);
 
-function invoker_get_dashboard_data($controller) {
-    $reflection = new \ReflectionClass(get_class($controller));
-    $method = $reflection->getMethod('getDashboardData');
-    $method->setAccessible(true);
-    return $method->invoke($controller);
-}
+        $name = $request->input('name');
+        $shortName = strtoupper($request->input('short_name'));
+
+        $exists = DB::select("SELECT COUNT(*) as count FROM teams WHERE LOWER(name) = LOWER(?) OR UPPER(short_name) = UPPER(?)", [$name, $shortName]);
+        
+        if (($exists[0]->count ?? $exists[0]->COUNT ?? 0) > 0) {
+            return redirect()->back()->withErrors(['duplicate' => 'A franchise team with this name or short code already exists.']);
+        }
+
+        DB::insert("INSERT INTO teams (name, short_name) VALUES (?, ?)", [$name, $shortName]);
+
+        return redirect()->route('admin.teams')->with('success', 'Team registration committed successfully.');
+    })->name('teams.store');
+
+    // 3. Athlete Enrollment (Players) Workspace Routes
+    Route::get('/players', function() {
+        $adminController = new AdminMatchController();
+        $data = invoker_get_dashboard_data($adminController);
+        $realTeams = DB::select("SELECT team_id, name FROM teams ORDER BY name ASC");
+        return view('admin.dashboard', array_merge($data, [
+            'currentAdminSubView' => 'players',
+            'realTeams' => $realTeams
+        ]));
+    })->name('players');
+
+    Route::post('/players', function(Request $request) {
+        $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'team_id' => 'required|integer'
+        ]);
+
+        $fullName = $request->input('first_name') . ' ' . $request->input('last_name');
+
+        DB::insert("INSERT INTO players (name, team_id) VALUES (?, ?)", [
+            $fullName,
+            $request->input('team_id')
+        ]);
+
+        return redirect()->route('admin.players')->with('success', 'Athlete profile enrolled successfully.');
+    })->name('players.store');
+
+    // 4. Tournament Calendar (Fixtures) Workspace Routes
+    Route::get('/fixtures', function() {
+        $adminController = new AdminMatchController();
+        $data = invoker_get_dashboard_data($adminController);
+        $realTeams = DB::select("SELECT team_id, name FROM teams ORDER BY name ASC");
+        
+        // Fetch fixtures to safely pass through to the dashboard data loop
+        $matches = DB::select("
+            SELECT m.match_id, m.match_status, t1.name as team1_name, t2.name as team2_name 
+            FROM matches m
+            JOIN teams t1 ON m.team1_id = t1.team_id
+            JOIN teams t2 ON m.team2_id = t2.team_id
+            ORDER BY m.match_date DESC
+        ");
+
+        return view('admin.dashboard', array_merge($data, [
+            'currentAdminSubView' => 'fixtures',
+            'realTeams' => $realTeams,
+            'matches' => $matches
+        ]));
+    })->name('fixtures');
+
+    Route::post('/fixtures', function(Request $request) {
+        $request->validate([
+            'team1_id' => 'required|integer',
+            'team2_id' => 'required|integer',
+            'match_date' => 'required'
+        ]);
+
+        $team1 = (int)$request->input('team1_id');
+        $team2 = (int)$request->input('team2_id');
+
+        if ($team1 === $team2) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['team2_id' => 'A team cannot play against itself. Please select two different squads.']);
+        }
+
+        $formattedDate = date('Y-m-d H:i:s', strtotime($request->input('match_date')));
+
+        DB::insert("
+            INSERT INTO matches (team1_id, team2_id, match_date, match_status, tournament_id, venue_id) 
+            VALUES (?, ?, TO_DATE(?, 'YYYY-MM-DD HH24:MI:SS'), 'Scheduled', 1, 1)
+        ", [
+            $team1,
+            $team2,
+            $formattedDate
+        ]);
+
+        return redirect()->route('admin.fixtures')->with('success', 'Tournament fixture slot row published successfully.');
+    })->name('fixtures.store');
+
+    // 5. News Feed Management System Workspace Routes
+    Route::get('/news', function() {
+        $adminController = new AdminMatchController();
+        $data = invoker_get_dashboard_data($adminController);
+        
+        $news = DB::select("
+            SELECT title, TO_CHAR(published_at, 'YYYY-MM-DD HH24:MI') as time 
+            FROM news_feed 
+            ORDER BY published_at DESC
+        ");
+
+        return view('admin.dashboard', array_merge($data, [
+            'currentAdminSubView' => 'news',
+            'news' => $news
+        ]));
+    })->name('news');
+
+    Route::post('/news', function(Request $request) {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string'
+        ]);
+
+        DB::insert("
+            INSERT INTO news_feed (title, content, published_at) 
+            VALUES (?, ?, SYSDATE)
+        ", [
+            $request->input('title'),
+            $request->input('content')
+        ]);
+
+        return redirect()->route('admin.news')->with('success', 'News bulletin broadcasted successfully.');
+    })->name('news.store');
+});

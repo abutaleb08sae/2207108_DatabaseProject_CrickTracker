@@ -8,6 +8,10 @@ use Exception;
 
 class AdminMatchController extends Controller
 {
+    /**
+     * Aggregates the relational payload workspace variables required by the dashboard context.
+     * Inherits structural records natively matched for downstream Oracle targets.
+     */
     private function getDashboardData()
     {
         $activeMatchArray = DB::select("
@@ -69,7 +73,16 @@ class AdminMatchController extends Controller
             $matches = [$activeMatch];
         }
 
-        return compact('activeMatch', 'battingSquad', 'bowlingSquad', 'matches');
+        // Global administration dataset properties requested uniformly across workspace routes
+        $realTeams = DB::select("SELECT team_id, name, short_name FROM teams ORDER BY team_id ASC");
+        
+        $news = DB::select("
+            SELECT title, TO_CHAR(published_at, 'YYYY-MM-DD HH24:MI') as time 
+            FROM news_feed 
+            ORDER BY published_at DESC
+        ");
+
+        return compact('activeMatch', 'battingSquad', 'bowlingSquad', 'matches', 'realTeams', 'news');
     }
 
     public function index()
