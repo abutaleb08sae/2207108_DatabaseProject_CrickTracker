@@ -81,8 +81,21 @@ class AdminMatchController extends Controller
             }
         }
 
-        // View management data feeds
-        $matches = DB::select("SELECT * FROM vw_live_scorecard");
+        // View management data feeds — FIXED ORACLE RESERVED KEYWORD ALIAS
+        $matches = DB::select("
+            SELECT m.match_id, 
+                   m.match_status, 
+                   t1.name as team1_name, 
+                   t2.name as team2_name,
+                   m.match_date as \"date\",
+                   v.name as venue_name
+            FROM matches m
+            LEFT JOIN teams t1 ON m.team1_id = t1.team_id
+            LEFT JOIN teams t2 ON m.team2_id = t2.team_id
+            LEFT JOIN venues v ON m.venue_id = v.venue_id
+            ORDER BY m.match_date DESC
+        ");
+        
         if (empty($matches)) {
             $matches = [$activeMatch];
         }
@@ -175,7 +188,6 @@ class AdminMatchController extends Controller
             $tossWinnerId = (int)$request->input('toss_winner_id');
             $tossDecision = $request->input('toss_decision');
 
-            // Elevate match state to Live and save Toss settings directly into database attributes
             DB::update("
                 UPDATE matches 
                 SET match_status = 'Live',
@@ -202,12 +214,24 @@ class AdminMatchController extends Controller
         try {
             $matchId = (int)$request->input('match_id');
 
-            // Move match status state out of 'Live' to 'Completed'
             DB::update("UPDATE matches SET match_status = 'Completed' WHERE match_id = ?", [$matchId]);
 
             return back()->with('success', 'Match finalized successfully and transferred to Recent Matches archives.');
         } catch (Exception $e) {
             return back()->withErrors(['error' => 'Failed to wrap up match: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Destroys and cleanses a fixture from the dataset matrix.
+     */
+    public function destroyFixture($id)
+    {
+        try {
+            DB::delete("DELETE FROM matches WHERE match_id = ?", [(int)$id]);
+            return back()->with('success', 'Match fixture erased from the application matrix successfully.');
+        } catch (Exception $e) {
+            return back()->withErrors(['error' => 'Failed to erase fixture entry: ' . $e->getMessage()]);
         }
     }
 

@@ -26,7 +26,35 @@ if (!function_exists('getGlobalCricketContext')) {
 Route::get('/', function () {
     $context = getGlobalCricketContext();
     
-    $liveMatches = DB::select("SELECT m.match_id, m.match_status, t1.name as team1_name, t2.name as team2_name FROM matches m LEFT JOIN teams t1 ON m.team1_id = t1.team_id LEFT JOIN teams t2 ON m.team2_id = t2.team_id WHERE m.match_status = 'Live'");
+    // Select all available columns from the view to prevent ORA-00904 column mismatches
+    $rawLiveMatches = DB::select("
+        SELECT * 
+        FROM vw_live_scorecard 
+        WHERE match_status = 'Live'
+    ");
+
+    // Map the results to ensure that all properties expected by welcome.blade.php exist
+    $liveMatches = array_map(function($match) {
+        $m = (array)$match;
+        
+        // Normalize keys to lowercase since Oracle returns columns in uppercase by default
+        $m = array_change_key_case($m, CASE_LOWER);
+
+        return (object)[
+            'match_id'     => $m['match_id'] ?? 1,
+            'match_status' => $m['match_status'] ?? 'Live',
+            'team1_name'   => $m['team1_name'] ?? 'Team 1',
+            'team2_name'   => $m['team2_name'] ?? 'Team 2',
+            'team1_score'  => $m['team1_score'] ?? null,
+            'team1_wickets'=> $m['team1_wickets'] ?? 0,
+            'team1_overs'  => $m['team1_overs'] ?? '0.0',
+            'team2_score'  => $m['team2_score'] ?? null,
+            'team2_wickets'=> $m['team2_wickets'] ?? 0,
+            'team2_overs'  => $m['team2_overs'] ?? '0.0',
+            'venue_name'   => $m['venue_name'] ?? $m['venue'] ?? 'Stadium'
+        ];
+    }, $rawLiveMatches);
+    
     $recentMatches = DB::select("SELECT * FROM (SELECT m.match_id, m.match_status, t1.name as team1_name, t2.name as team2_name FROM matches m LEFT JOIN teams t1 ON m.team1_id = t1.team_id LEFT JOIN teams t2 ON m.team2_id = t2.team_id WHERE m.match_status IN ('Completed', 'Abandoned') ORDER BY m.match_id DESC) WHERE ROWNUM <= 3");
     
     $upcomingMatches = DB::select("
@@ -107,16 +135,16 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
-    
     Route::get('/', [AdminMatchController::class, 'index']);
     Route::get('/dashboard', [AdminMatchController::class, 'showLiveScoring'])->name('dashboard');
     Route::get('/matches', [AdminMatchController::class, 'showLiveScoring'])->name('matches.index');
-
     Route::get('/match-live', [AdminMatchController::class, 'showLiveScoring'])->name('match-live');
     Route::get('/teams', [AdminMatchController::class, 'showTeams'])->name('teams');
     Route::get('/players', [AdminMatchController::class, 'showPlayers'])->name('players');
-    Route::get('/fixtures', [AdminMatchController::class, 'showFixtures'])->name('fixtures');
     Route::get('/news', [AdminMatchController::class, 'showNews'])->name('news');
+    Route::get('/fixtures', [AdminMatchController::class, 'showFixtures'])->name('fixtures');
+    
+    Route::delete('/fixtures/{id}', [AdminMatchController::class, 'destroyFixture'])->name('fixtures.destroy');
 
     Route::post('/match-live/start', [AdminMatchController::class, 'startLiveMatch'])->name('match-live.start');
     Route::post('/match-live/complete', [AdminMatchController::class, 'completeLiveMatch'])->name('match-live.complete');
@@ -148,13 +176,15 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         $nextMatchIdSelect = DB::select("SELECT COALESCE(MAX(match_id), 0) + 1 as next_id FROM matches");
         $nextMatchId = $nextMatchIdSelect[0]->next_id ?? $nextMatchIdSelect[0]->NEXT_ID ?? 1;
         $formattedDate = date('Y-m-d H:i:s', strtotime($request->input('match_date')));
+        
+        $statusValue = ucfirst(strtolower($request->input('status', 'Scheduled'))); 
 
         try { DB::statement("ALTER TABLE matches DISABLE CONSTRAINT FK_MATCH_TOURN"); } catch (\Exception $e) {}
         try { DB::statement("ALTER TABLE matches DISABLE CONSTRAINT FK_MATCH_VENUE"); } catch (\Exception $e) {}
 
         try {
-            DB::insert("INSERT INTO matches (match_id, team1_id, team2_id, match_date, match_status, tournament_id, venue_id) VALUES (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD HH24:MI:SS'), 'Scheduled', 1, 1)", [
-                $nextMatchId, (int)$request->input('team1_id'), (int)$request->input('team2_id'), $formattedDate
+            DB::insert("INSERT INTO matches (match_id, team1_id, team2_id, match_date, match_status, tournament_id, venue_id) VALUES (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD HH24:MI:SS'), ?, 1, 1)", [
+                $nextMatchId, (int)$request->input('team1_id'), (int)$request->input('team2_id'), $formattedDate, $statusValue
             ]);
         } 
         finally {
