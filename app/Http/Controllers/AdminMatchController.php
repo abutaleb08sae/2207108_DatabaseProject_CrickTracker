@@ -11,10 +11,6 @@ class AdminMatchController extends Controller
     /**
      * Admin Dashboard Navigation Landing Page.
      * Grabs separate collection contexts for live dashboards vs upcoming fixtures.
-     * 
-     * FIXED: This now properly targets your main dashboard selection panel view 
-     * (admin.scoring-dashboard) so admins can see scheduled matches, click control, 
-     * and proceed to the active room.
      */
     public function showLiveScoring()
     {
@@ -58,14 +54,12 @@ class AdminMatchController extends Controller
             return (object)$m;
         }, $rawScheduled);
 
-        // Render the selection dashboard where upcoming matches automatically appear
         return view('admin.scoring-dashboard', compact('activeLiveMatches', 'scheduledMatches'));
     }
 
     /**
      * Dedicated Scoring Control Room Environment for a specific match context.
      * Dynamically segments batting/bowling squads based on the recorded toss decision.
-     * Renders the full interactive rapid input workspace grid.
      */
     public function openScoringRoom($id)
     {
@@ -82,23 +76,19 @@ class AdminMatchController extends Controller
         ", [(int)$id]);
 
         if (empty($matchArray)) {
-            return redirect()->route('admin.dashboard')->withErrors(['error' => 'Selected match instance could not be resolved.']);
+            return redirect()->route('admin.scoring.dashboard')->withErrors(['error' => 'Selected match instance could not be resolved.']);
         }
 
-        // Standardize properties to lower-case keys to protect code execution from Oracle key mismatches
         $activeMatch = (object)array_change_key_case((array)$matchArray[0], CASE_LOWER);
 
-        // Parse toss dependencies to dynamically assign current roles
         $tossWinnerId = $activeMatch->toss_winner_id ?? null;
         $tossDecision = strtoupper($activeMatch->toss_decision ?? '');
         $team1Id      = $activeMatch->team1_id ?? null;
         $team2Id      = $activeMatch->team2_id ?? null;
 
-        // Default layout assignment
         $battingTeamId  = $team1Id;
         $bowlingTeamId  = $team2Id;
 
-        // Apply tactical switches based on live conditions
         if (!empty($tossWinnerId)) {
             if ($tossWinnerId == $team1Id) {
                 $battingTeamId = ($tossDecision === 'BAT') ? $team1Id : $team2Id;
@@ -108,22 +98,34 @@ class AdminMatchController extends Controller
                 $bowlingTeamId = ($tossDecision === 'BAT') ? $team1Id : $team2Id;
             }
         }
-        // FIXED: Removed lowercase double quotes so Oracle can resolve standard uppercase identifiers natively
-$rawBatters = DB::select('SELECT player_id, first_name, last_name FROM players WHERE team_id = ?', [$battingTeamId]);
-$rawBowlers = DB::select('SELECT player_id, first_name, last_name FROM players WHERE team_id = ?', [$bowlingTeamId]);
+
+        // FIXED: Left Join with stat components to display live cumulative data dynamically 
+        $rawBatters = DB::select("
+            SELECT p.player_id, p.first_name, p.last_name, NVL(b.total_runs, 0) as total_runs
+            FROM players p 
+            LEFT JOIN batting_details b ON p.player_id = b.player_id
+            WHERE p.team_id = ?
+        ", [$battingTeamId]);
+
+        $rawBowlers = DB::select("
+            SELECT p.player_id, p.first_name, p.last_name, NVL(bw.wickets_taken, 0) as wickets_taken
+            FROM players p 
+            LEFT JOIN bowling_details bw ON p.player_id = bw.player_id
+            WHERE p.team_id = ?
+        ", [$bowlingTeamId]);
+        
         $battingSquad = array_map(function($p) {
             $pArr = array_change_key_case((array)$p, CASE_LOWER);
-            $pArr['player_name'] = trim(($pArr['first_name'] ?? '') . ' ' . ($pArr['last_name'] ?? ''));
+            $pArr['player_name'] = trim(($pArr['first_name'] ?? '') . ' ' . ($pArr['last_name'] ?? '')) . ' (' . ($pArr['total_runs'] ?? 0) . ' Runs)';
             return (object)$pArr;
         }, $rawBatters);
 
         $bowlingSquad = array_map(function($p) {
             $pArr = array_change_key_case((array)$p, CASE_LOWER);
-            $pArr['player_name'] = trim(($pArr['first_name'] ?? '') . ' ' . ($pArr['last_name'] ?? ''));
+            $pArr['player_name'] = trim(($pArr['first_name'] ?? '') . ' ' . ($pArr['last_name'] ?? '')) . ' (' . ($pArr['wickets_taken'] ?? 0) . ' Wkts)';
             return (object)$pArr;
         }, $rawBowlers);
 
-        // Returns your actual interactive live console layout file
         return view('admin.scoring', compact('activeMatch', 'battingSquad', 'bowlingSquad'));
     }
 
@@ -141,8 +143,6 @@ $rawBowlers = DB::select('SELECT player_id, first_name, last_name FROM players W
         try {
             $matchId = (int)$request->input('match_id');
             $tossWinnerId = (int)$request->input('toss_winner_id');
-            
-            // FIXED: Ensure the decision maps directly to standard constraint capitalization (e.g., 'BAT')
             $tossDecision = strtoupper(trim($request->input('toss_decision')));
 
             DB::update("
@@ -153,7 +153,6 @@ $rawBowlers = DB::select('SELECT player_id, first_name, last_name FROM players W
                 WHERE match_id = ?
             ", [$tossWinnerId, $tossDecision, $matchId]);
 
-            // Route directly to the match's scoring panel upon successful initialization
             return redirect()->route('admin.scoring.room', $matchId)
                              ->with('success', 'Toss verified! Live scoring console is now running.');
         } catch (Exception $e) {
@@ -169,7 +168,8 @@ $rawBowlers = DB::select('SELECT player_id, first_name, last_name FROM players W
         $request->validate([
             'match_id'        => 'required|numeric',
             'innings'         => 'required|numeric',
-            'lineup_batsman'  => 'required|numeric', 
+            'batsman_id'      => 'required|numeric', 
+            'non_striker_id'  => 'nullable|numeric',
             'bowler_id'       => 'required|numeric',
             'runs_scored'     => 'required|numeric',
             'description'     => 'required|string|max:400',
@@ -179,7 +179,7 @@ $rawBowlers = DB::select('SELECT player_id, first_name, last_name FROM players W
         ]);
 
         try {
-            $batsmanId   = (int)$request->lineup_batsman;
+            $batsmanId   = (int)$request->batsman_id;
             $extraType   = !empty($request->extra_type) ? $request->extra_type : NULL;
             $extraRuns   = intval($request->extra_runs ?? 0);
             $wicketKind  = !empty($request->wicket_type) ? $request->wicket_type : NULL;
@@ -230,43 +230,52 @@ $rawBowlers = DB::select('SELECT player_id, first_name, last_name FROM players W
 
         try {
             $matchId = (int)$request->input('match_id');
-
             DB::update("UPDATE matches SET match_status = 'Completed' WHERE match_id = ?", [$matchId]);
-
-            return redirect()->route('admin.dashboard')->with('success', 'Match finalized successfully and transferred to archives.');
+            return redirect()->route('admin.scoring.dashboard')->with('success', 'Match finalized successfully.');
         } catch (Exception $e) {
             return back()->withErrors(['error' => 'Failed to wrap up match: ' . $e->getMessage()]);
         }
     }
 
-    /**
-     * Fallback and auxiliary page views using structured clean lists
-     */
     public function index()
     {
-        return redirect()->route('admin.dashboard');
+        return redirect()->route('admin.scoring.dashboard');
     }
 
     private function getFallbackGlobalContext()
     {
-        $realTeams = DB::select("SELECT team_id, name, short_name FROM teams ORDER BY team_id ASC");
+        $rawTeams = DB::select("SELECT team_id, name, short_name FROM teams ORDER BY team_id ASC");
+        
+        $realTeams = array_map(function($team) {
+            return (object)array_change_key_case((array)$team, CASE_LOWER);
+        }, $rawTeams);
+
         return ['realTeams' => $realTeams, 'matches' => [], 'news' => [], 'battingSquad' => [], 'bowlingSquad' => []];
     }
 
     public function showTeams()
     {
         $data = $this->getFallbackGlobalContext();
-        $data['realTeams'] = DB::select("SELECT team_id, name, short_name FROM teams ORDER BY team_id ASC");
         return view('admin.teams', $data);
     }
 
     public function showPlayers()
     {
         $data = $this->getFallbackGlobalContext();
-        $rawP = DB::select('SELECT * FROM players');
+        
+        $rawP = DB::select("
+            SELECT p.*, t.name as team_name 
+            FROM players p
+            LEFT JOIN teams t ON p.team_id = t.team_id
+            ORDER BY p.player_id DESC
+        ");
+
         $data['allPlayers'] = array_map(function($p) {
-            return (object)array_change_key_case((array)$p, CASE_LOWER);
+            $pArr = array_change_key_case((array)$p, CASE_LOWER);
+            $pArr['player_name'] = trim(($pArr['first_name'] ?? '') . ' ' . ($pArr['last_name'] ?? ''));
+            return (object)$pArr;
         }, $rawP);
+
         return view('admin.players', $data);
     }
 

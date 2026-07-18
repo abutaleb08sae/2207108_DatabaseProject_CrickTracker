@@ -51,28 +51,34 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
                 <label for="batsman_id" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Batsman (On Strike)</label>
-                <select id="batsman_id" name="lineup_batsman" form="ballScoringForm" required class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white rounded-xl px-4 py-3 text-sm transition outline-none">
+                <select id="batsman_id" name="batsman_id" form="ballScoringForm" required onchange="checkAndAutoSubmit()" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white rounded-xl px-4 py-3 text-sm transition outline-none">
                     <option value="" disabled selected>Select Striker</option>
                     @foreach($battingSquad ?? [] as $player)
-                        <option value="{{ $player->player_id ?? $player->PLAYER_ID }}">{{ $player->player_name ?? $player->PLAYER_NAME ?? ($player->first_name ?? '').' '.($player->last_name ?? '') }}</option>
+                        <option value="{{ $player->player_id ?? $player->PLAYER_ID }}">
+                            {{ $player->player_name ?? $player->PLAYER_NAME ?? trim(($player->FIRST_NAME ?? $player->first_name ?? '') . ' ' . ($player->LAST_NAME ?? $player->last_name ?? '')) }}
+                        </option>
                     @endforeach
                 </select>
             </div>
             <div>
                 <label for="non_striker_id" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Batsman (Off Strike)</label>
-                <select id="non_striker_id" name="non_striker_id" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white rounded-xl px-4 py-3 text-sm transition outline-none">
+                <select id="non_striker_id" name="non_striker_id" form="ballScoringForm" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white rounded-xl px-4 py-3 text-sm transition outline-none">
                     <option value="" disabled selected>Select Non-Striker</option>
                     @foreach($battingSquad ?? [] as $player)
-                        <option value="{{ $player->player_id ?? $player->PLAYER_ID }}">{{ $player->player_name ?? $player->PLAYER_NAME ?? ($player->first_name ?? '').' '.($player->last_name ?? '') }}</option>
+                        <option value="{{ $player->player_id ?? $player->PLAYER_ID }}">
+                            {{ $player->player_name ?? $player->PLAYER_NAME ?? trim(($player->FIRST_NAME ?? $player->first_name ?? '') . ' ' . ($player->LAST_NAME ?? $player->last_name ?? '')) }}
+                        </option>
                     @endforeach
                 </select>
             </div>
             <div>
                 <label for="bowler_id" class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Current Bowler</label>
-                <select id="bowler_id" name="bowler_id" form="ballScoringForm" required class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white rounded-xl px-4 py-3 text-sm transition outline-none">
+                <select id="bowler_id" name="bowler_id" form="ballScoringForm" required onchange="checkAndAutoSubmit()" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 text-white rounded-xl px-4 py-3 text-sm transition outline-none">
                     <option value="" disabled selected>Select Bowler</option>
                     @foreach($bowlingSquad ?? [] as $player)
-                        <option value="{{ $player->player_id ?? $player->PLAYER_ID }}">{{ $player->player_name ?? $player->PLAYER_NAME ?? ($player->first_name ?? '').' '.($player->last_name ?? '') }}</option>
+                        <option value="{{ $player->player_id ?? $player->PLAYER_ID }}">
+                            {{ $player->player_name ?? $player->PLAYER_NAME ?? trim(($player->FIRST_NAME ?? $player->first_name ?? '') . ' ' . ($player->LAST_NAME ?? $player->last_name ?? '')) }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -110,40 +116,46 @@
                     <table class="w-full text-left text-xs border-collapse">
                         <thead>
                             <tr class="text-slate-500 uppercase border-b border-slate-800/60">
-                                <th class="py-2 font-bold">Batsman</th>
-                                <th class="py-2 text-center font-bold">R</th>
-                                <th class="py-2 text-center font-bold">B</th>
-                                <th class="py-2 text-center font-bold">4s</th>
-                                <th class="py-2 text-center font-bold">6s</th>
+                                <th class="py-2 font-bold">Active Batters</th>
+                                <th class="py-2 text-center font-bold">Runs</th>
                             </tr>
                         </thead>
                         <tbody class="text-slate-300 divide-y divide-slate-800/40">
-                            <tr>
-                                <td class="py-2.5 font-semibold text-white">Asif *</td>
-                                <td class="py-2.5 text-center font-mono">13</td>
-                                <td class="py-2.5 text-center font-mono">3</td>
-                                <td class="py-2.5 text-center font-mono">0</td>
-                                <td class="py-2.5 text-center font-mono">2</td>
-                            </tr>
-                            <tr>
-                                <td class="py-2.5 font-medium text-slate-400">Tahmid</td>
-                                <td class="py-2.5 text-center font-mono text-slate-400">15</td>
-                                <td class="py-2.5 text-center font-mono text-slate-400">3</td>
-                                <td class="py-2.5 text-center font-mono text-slate-400">0</td>
-                                <td class="py-2.5 text-center font-mono text-slate-400">2</td>
-                            </tr>
+                            @forelse($battingSquad ?? [] as $index => $player)
+                                <tr class="{{ $index === 0 ? 'bg-emerald-950/20 text-emerald-400 border-l-2 border-emerald-500' : '' }}">
+                                    <td class="py-2.5 pl-2 font-semibold text-white">
+                                        {{ trim(($player->first_name ?? $player->FIRST_NAME ?? '') . ' ' . ($player->last_name ?? $player->LAST_NAME ?? '')) }} 
+                                        {!! $index === 0 ? '<span class="text-emerald-400 ml-1 font-bold">*</span>' : '' !!}
+                                    </td>
+                                    <td class="py-2.5 text-center font-mono">
+                                        {{ $player->total_runs ?? $player->TOTAL_RUNS ?? 0 }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="2" class="py-3 text-center text-slate-500 italic">No batting squad data verified.</td>
+                                </tr>
+                            @endforelse
+
                             <tr class="text-slate-500 uppercase border-b border-slate-800/60 font-bold text-2xs">
-                                <th class="pt-4 pb-1" colspan="2">Bowler</th>
-                                <th class="pt-4 pb-1 text-center">O</th>
-                                <th class="pt-4 pb-1 text-center">R</th>
-                                <th class="pt-4 pb-1 text-center">W</th>
+                                <th class="pt-4 pb-1">Active Bowlers</th>
+                                <th class="pt-4 pb-1 text-center">Wickets</th>
                             </tr>
-                            <tr>
-                                <td class="py-2.5 font-semibold text-white" colspan="2">Sami</td>
-                                <td class="py-2.5 text-center font-mono">1.0</td>
-                                <td class="py-2.5 text-center font-mono">28</td>
-                                <td class="py-2.5 text-center font-mono text-emerald-400 font-bold">0</td>
-                            </tr>
+                            
+                            @forelse($bowlingSquad ?? [] as $player)
+                                <tr>
+                                    <td class="py-2.5 font-semibold text-white pl-2">
+                                        {{ trim(($player->first_name ?? $player->FIRST_NAME ?? '') . ' ' . ($player->last_name ?? $player->LAST_NAME ?? '')) }}
+                                    </td>
+                                    <td class="py-2.5 text-center font-mono text-emerald-400 font-bold">
+                                        {{ $player->wickets_taken ?? $player->WICKETS_TAKEN ?? 0 }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="2" class="py-3 text-center text-slate-500 italic">No bowling squad data verified.</td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -299,16 +311,20 @@
 
 <!-- Inline JavaScript Event Mapper Logic Setup -->
 <script>
+    // Global lock state flags for tracking unsubmitted inputs
+    let pendingSubmission = false;
+
     /**
-     * Updates the form input selections synchronously upon button matrix click events.
+     * Updates form values and automatically dispatches the action straight to the database
      */
-    function setBallOutcome(runs, extraType, extraRuns, wicketType) {
+    public function setBallOutcome(runs, extraType, extraRuns, wicketType) {
+        // Step 1: Populate inputs fields
         document.getElementById('runs_scored').value = runs;
         document.getElementById('extra_type').value = extraType;
         document.getElementById('extra_runs').value = extraRuns;
         document.getElementById('wicket_type').value = wicketType;
         
-        // Auto-generate helper commentary templates for rapid submission loops
+        // Step 2: Auto-generate appropriate commentary templates 
         const genericFeed = document.getElementById('description');
         if(wicketType !== '') {
             genericFeed.value = "OUT! Wicket fall event recorded. Delivery resulting in standard " + wicketType.toLowerCase() + " dismissal.";
@@ -317,12 +333,47 @@
         } else {
             genericFeed.value = runs === 0 ? "Good delivery, dot ball logged." : runs + " run(s) scored dynamically away into space.";
         }
+        
+        // Step 3: Validate required lineup items before automatic trigger firing
+        const striker = document.getElementById('batsman_id').value;
+        const bowler = document.getElementById('bowler_id').value;
+        
+        if (!striker || !bowler) {
+            pendingSubmission = true;
+            alert("Please pick a Batsman (On Strike) and a Current Bowler from the top configuration dropdown menu first!");
+            return;
+        }
+
+        // Step 4: Automate transaction straight to Oracle connection
+        executeFormSubmission();
+    }
+
+    /**
+     * Helper to fires the native submission engine safely
+     */
+    function executeFormSubmission() {
+        pendingSubmission = false;
+        document.getElementById('ballScoringForm').submit();
+    }
+
+    /**
+     * Triggered via dropdown inputs to fire an ongoing queued transaction event matrix
+     */
+    function checkAndAutoSubmit() {
+        if (pendingSubmission) {
+            const striker = document.getElementById('batsman_id').value;
+            const bowler = document.getElementById('bowler_id').value;
+            if (striker && bowler) {
+                executeFormSubmission();
+            }
+        }
     }
 
     /**
      * Clears local UI configurations safely back to default.
      */
     function resetFormState() {
+        pendingSubmission = false;
         document.getElementById('ballScoringForm').reset();
         document.getElementById('description').value = '';
     }

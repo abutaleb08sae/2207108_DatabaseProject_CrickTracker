@@ -11,18 +11,22 @@ if (!function_exists('getGlobalCricketContext')) {
      * Aggregates standard public layout dependencies.
      */
     function getGlobalCricketContext() {
-        return [
-            'news' => DB::select("
-                SELECT title, time 
-                FROM (
-                    SELECT title, 
-                           TO_CHAR(published_at, 'YYYY-MM-DD HH24:MI') as time 
-                    FROM news_feed 
-                    ORDER BY published_at DESC
-                ) 
-                WHERE ROWNUM <= 5
-            ")
-        ];
+        $rawNews = DB::select("
+            SELECT title, time 
+            FROM (
+                SELECT title, 
+                       TO_CHAR(published_at, 'YYYY-MM-DD HH24:MI') as time 
+                FROM news_feed 
+                ORDER BY published_at DESC
+            ) 
+            WHERE ROWNUM <= 5
+        ");
+
+        $news = array_map(function($item) {
+            return (object)array_change_key_case((array)$item, CASE_LOWER);
+        }, $rawNews);
+
+        return ['news' => $news];
     }
 }
 
@@ -59,7 +63,7 @@ Route::get('/', function () {
         ];
     }, $rawLiveMatches);
     
-    $recentMatches = DB::select("
+    $rawRecent = DB::select("
         SELECT * FROM (
             SELECT m.match_id, m.match_status, t1.name as team1_name, t2.name as team2_name 
             FROM matches m 
@@ -70,7 +74,11 @@ Route::get('/', function () {
         ) WHERE ROWNUM <= 3
     ");
     
-    $upcomingMatches = DB::select("
+    $recentMatches = array_map(function($match) {
+        return (object)array_change_key_case((array)$match, CASE_LOWER);
+    }, $rawRecent);
+    
+    $rawUpcoming = DB::select("
         SELECT * FROM (
             SELECT m.match_id, 
                    m.match_status, 
@@ -86,6 +94,10 @@ Route::get('/', function () {
         ) WHERE ROWNUM <= 3
     ");
 
+    $upcomingMatches = array_map(function($match) {
+        return (object)array_change_key_case((array)$match, CASE_LOWER);
+    }, $rawUpcoming);
+
     return view('welcome', array_merge($context, [
         'currentView'     => 'dashboard',
         'liveMatches'     => $liveMatches,
@@ -96,7 +108,7 @@ Route::get('/', function () {
 
 Route::get('/recent-matches', function () {
     $context = getGlobalCricketContext();
-    $recentMatches = DB::select("
+    $rawRecent = DB::select("
         SELECT m.*, t1.name as team1_name, t2.name as team2_name 
         FROM matches m 
         LEFT JOIN teams t1 ON m.team1_id = t1.team_id 
@@ -104,6 +116,10 @@ Route::get('/recent-matches', function () {
         WHERE UPPER(m.match_status) IN ('COMPLETED', 'ABANDONED') 
         ORDER BY m.match_id DESC
     ");
+
+    $recentMatches = array_map(function($match) {
+        return (object)array_change_key_case((array)$match, CASE_LOWER);
+    }, $rawRecent);
 
     return view('welcome', array_merge($context, [
         'currentView'   => 'recent',
@@ -113,7 +129,7 @@ Route::get('/recent-matches', function () {
 
 Route::get('/upcoming-matches', function () {
     $context = getGlobalCricketContext();
-    $upcomingMatches = DB::select("
+    $rawUpcoming = DB::select("
         SELECT m.match_id,
                t1.name AS team1_name,
                t2.name AS team2_name,
@@ -125,6 +141,10 @@ Route::get('/upcoming-matches', function () {
         WHERE UPPER(m.match_status) = 'SCHEDULED'
         ORDER BY m.match_date ASC
     ");
+
+    $upcomingMatches = array_map(function($match) {
+        return (object)array_change_key_case((array)$match, CASE_LOWER);
+    }, $rawUpcoming);
 
     return view('welcome', array_merge($context, [
         'currentView'     => 'upcoming',
@@ -139,13 +159,23 @@ Route::get('/player-statistics', function () {
 
 Route::get('/teams', function () {
     $context = getGlobalCricketContext();
-    $teams = DB::select("SELECT name, 0 as played, 0 as won, 0 as lost, 0 as points, 0.00 as net_run_rate FROM teams");
+    $rawTeams = DB::select("SELECT name, 0 as played, 0 as won, 0 as lost, 0 as points, 0.00 as net_run_rate FROM teams");
+    
+    $teams = array_map(function($team) {
+        return (object)array_change_key_case((array)$team, CASE_LOWER);
+    }, $rawTeams);
+
     return view('welcome', array_merge($context, ['currentView' => 'teams', 'teams' => $teams]));
 });
 
 Route::get('/news', function () {
     $context = getGlobalCricketContext();
-    $allNews = DB::select("SELECT title, content, TO_CHAR(published_at, 'DD Mon YYYY') as formatted_time FROM news_feed ORDER BY published_at DESC");
+    $rawNews = DB::select("SELECT title, content, TO_CHAR(published_at, 'DD Mon YYYY') as formatted_time FROM news_feed ORDER BY published_at DESC");
+    
+    $allNews = array_map(function($item) {
+        return (object)array_change_key_case((array)$item, CASE_LOWER);
+    }, $rawNews);
+
     return view('welcome', array_merge($context, ['currentView' => 'news', 'allNews' => $allNews]));
 });
 
@@ -169,30 +199,23 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
     
-    // Core Dashboard & Direct Entry Landing Points
     Route::get('/', [AdminMatchController::class, 'index']);
     Route::get('/dashboard', [AdminMatchController::class, 'showLiveScoring'])->name('dashboard');
     Route::get('/match-live', [AdminMatchController::class, 'showLiveScoring'])->name('match-live');
     
-    // Dedicated Scoring Console Workspace Environment (Your Control Room View)
     Route::get('/scoring/{id}', [AdminMatchController::class, 'openScoringRoom'])->name('scoring.room');
     
-    // Isolated Dynamic Asset Control Views
     Route::get('/teams', [AdminMatchController::class, 'showTeams'])->name('teams');
     Route::get('/players', [AdminMatchController::class, 'showPlayers'])->name('players');
     Route::get('/news', [AdminMatchController::class, 'showNews'])->name('news');
     Route::get('/fixtures', [AdminMatchController::class, 'showFixtures'])->name('fixtures');
     
-    // Transaction Engine Submissions & Mutators
     Route::delete('/fixtures/{id}', [AdminMatchController::class, 'destroyFixture'])->name('fixtures.destroy');
     
-    // FIXED ALIAS NAME: This matches the route('admin.match.start') requirement in your dashboard blade file
     Route::post('/match-live/start', [AdminMatchController::class, 'startLiveMatch'])->name('match.start');
-    
     Route::post('/match-live/complete', [AdminMatchController::class, 'completeLiveMatch'])->name('match-live.complete');
     Route::post('/matches/ball-by-ball', [AdminMatchController::class, 'storeBall'])->name('matches.storeBall');
 
-    // Dynamic Asset Storage Endpoints
     Route::post('/teams', function(Request $request) {
         $nextIdSelect = DB::select("SELECT COALESCE(MAX(team_id), 0) + 1 as next_id FROM teams");
         $nextId = $nextIdSelect[0]->next_id ?? $nextIdSelect[0]->NEXT_ID ?? 1;
@@ -200,16 +223,25 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         return redirect()->route('admin.teams')->with('success', 'Team registration compiled successfully.');
     })->name('teams.store');
 
+    // FIXED: Maps data inputs for player_role, batting_style, and date_of_birth to safely clear all ORA-01400 table constraints
     Route::post('/players', function(Request $request) {
         $nextPlayerIdSelect = DB::select("SELECT COALESCE(MAX(player_id), 0) + 1 as next_id FROM players");
         $nextPlayerId = $nextPlayerIdSelect[0]->next_id ?? $nextPlayerIdSelect[0]->NEXT_ID ?? 1;
         
-        $firstName = $request->input('first_name', 'Player');
-        $lastName = $request->input('last_name', 'New');
-        $teamId = (int)$request->input('team_id');
+        $firstName    = $request->input('first_name', 'Player');
+        $lastName     = $request->input('last_name', 'New');
+        $teamId       = (int)$request->input('team_id');
+        $battingStyle = $request->input('batting_style', 'Right-hand bat'); 
+        $playerRole   = $request->input('player_role', 'Batsman'); 
+        
+        $dobInput     = $request->input('date_of_birth'); 
+        $dobString    = !empty($dobInput) ? date('Y-m-d', strtotime($dobInput)) : '2000-01-01';
 
-        DB::insert("INSERT INTO players (player_id, first_name, last_name, team_id) VALUES (?, ?, ?, ?)", [
-            $nextPlayerId, $firstName, $lastName, $teamId
+        DB::insert("
+            INSERT INTO players (player_id, first_name, last_name, team_id, batting_style, player_role, date_of_birth) 
+            VALUES (?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'))
+        ", [
+            $nextPlayerId, $firstName, $lastName, $teamId, $battingStyle, $playerRole, $dobString
         ]);
         
         return redirect()->route('admin.players')->with('success', 'Athlete rostered successfully.');
