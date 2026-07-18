@@ -11,7 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // EXEMPT THE AUTHENTICATION ENDPOINTS FROM CSRF VERIFICATION
+        $middleware->validateCsrfTokens(except: [
+            '/login',
+            '/register'
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

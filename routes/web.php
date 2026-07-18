@@ -3,18 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminMatchController;
+use App\Models\User;
 
-/*
-|--------------------------------------------------------------------------
-| Global Context Helpers
-|--------------------------------------------------------------------------
-*/
-
-/**
- * Context Helper: Fetches global sidebar content or marquee updates dynamically from Oracle
- */
 function getGlobalCricketContext() {
     return [
         'news' => DB::select("
@@ -30,33 +22,11 @@ function getGlobalCricketContext() {
     ];
 }
 
-/*
-|--------------------------------------------------------------------------
-| Public Frontend Routes
-|--------------------------------------------------------------------------
-*/
-
-// 1. DASHBOARD / HOME VIEW
 Route::get('/', function () {
     $context = getGlobalCricketContext();
-    
     $liveMatches = DB::select("SELECT * FROM vw_live_scorecard WHERE match_status = 'Live'");
-    
-    $recentMatches = DB::select("
-        SELECT * FROM (
-            SELECT * FROM vw_live_scorecard 
-            WHERE match_status = 'Completed'
-            ORDER BY match_id DESC
-        ) WHERE ROWNUM <= 3
-    ");
-    
-    $upcomingMatches = DB::select("
-        SELECT * FROM (
-            SELECT * FROM vw_live_scorecard 
-            WHERE match_status = 'Scheduled'
-            ORDER BY match_id ASC
-        ) WHERE ROWNUM <= 3
-    ");
+    $recentMatches = DB::select("SELECT * FROM (SELECT * FROM vw_live_scorecard WHERE match_status = 'Completed' ORDER BY match_id DESC) WHERE ROWNUM <= 3");
+    $upcomingMatches = DB::select("SELECT * FROM (SELECT * FROM vw_live_scorecard WHERE match_status = 'Scheduled' ORDER BY match_id ASC) WHERE ROWNUM <= 3");
 
     return view('welcome', array_merge($context, [
         'currentView' => 'dashboard',
@@ -66,15 +36,9 @@ Route::get('/', function () {
     ]));
 });
 
-// 2. RECENT MATCHES VIEW
 Route::get('/recent-matches', function () {
     $context = getGlobalCricketContext();
-    
-    $recentMatches = DB::select("
-        SELECT * FROM vw_live_scorecard 
-        WHERE match_status IN ('Completed', 'Abandoned') 
-        ORDER BY match_id DESC
-    ");
+    $recentMatches = DB::select("SELECT * FROM vw_live_scorecard WHERE match_status IN ('Completed', 'Abandoned') ORDER BY match_id DESC");
 
     return view('welcome', array_merge($context, [
         'currentView' => 'recent',
@@ -82,10 +46,8 @@ Route::get('/recent-matches', function () {
     ]));
 });
 
-// 3. UPCOMING MATCHES VIEW
 Route::get('/upcoming-matches', function () {
     $context = getGlobalCricketContext();
-    
     $upcomingMatches = DB::select("
         SELECT m.match_id,
                t1.name AS team1_name,
@@ -107,10 +69,8 @@ Route::get('/upcoming-matches', function () {
     ]));
 });
 
-// 4. PLAYER STATISTICS LEADERBOARD VIEW
 Route::get('/player-statistics', function () {
     $context = getGlobalCricketContext();
-    
     $battingStats = DB::select("SELECT * FROM vw_player_batting_records WHERE runs_scored > 0 ORDER BY runs_scored DESC");
     $bowlingStats = DB::select("SELECT * FROM vw_player_bowling_records WHERE wickets_taken > 0 ORDER BY wickets_taken DESC");
     
@@ -121,10 +81,8 @@ Route::get('/player-statistics', function () {
     ]));
 });
 
-// 5. TEAMS / LEAGUE POINTS TABLE VIEW
 Route::get('/teams', function () {
     $context = getGlobalCricketContext();
-    
     $teams = DB::select("
         SELECT t.name, pt.played, pt.won, pt.lost, pt.tied, pt.points, pt.net_run_rate 
         FROM points_table pt
@@ -138,10 +96,8 @@ Route::get('/teams', function () {
     ]));
 });
 
-// 6. EDITORIAL NEWS FEED VIEW
 Route::get('/news', function () {
     $context = getGlobalCricketContext();
-    
     $allNews = DB::select("
         SELECT title, 
                content,
@@ -156,34 +112,43 @@ Route::get('/news', function () {
     ]));
 });
 
-/*
-|--------------------------------------------------------------------------
-| Manual Authentication Routes (Replaces Auth::routes())
-|--------------------------------------------------------------------------
-*/
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Login Placeholders (Map these to your actual Login/Register Auth Controllers if you have them)
-Route::get('/login', function () { return "Login Page Placeholder"; })->name('login');
-Route::get('/register', function () { return "Registration Page Placeholder"; })->name('register');
+Route::get('/admin/dashboard', [AdminMatchController::class, 'dashboard'])->name('admin.dashboard');
+Route::get('/admin/matches', [AdminMatchController::class, 'index'])->name('admin.matches.index');
+Route::post('/admin/matches/ball-by-ball', [AdminMatchController::class, 'storeBall'])->name('admin.matches.storeBall');
 
-// Handle Logout Processing safely
-Route::post('/logout', function (Request $request) {
-    Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-    return redirect('/');
-})->name('logout');
+Route::get('/admin/teams', function() {
+    $adminController = new AdminMatchController();
+    $data = invoker_get_dashboard_data($adminController);
+    return view('admin.dashboard', array_merge($data, ['currentAdminSubView' => 'teams']));
+})->name('admin.teams');
 
+Route::get('/admin/players', function() {
+    $adminController = new AdminMatchController();
+    $data = invoker_get_dashboard_data($adminController);
+    return view('admin.dashboard', array_merge($data, ['currentAdminSubView' => 'players']));
+})->name('admin.players');
 
-/*
-|--------------------------------------------------------------------------
-| Admin Scoring Console Routes
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth'])->group(function () {
-    // If you haven't implemented a formal custom structural 'admin' middleware yet, 
-    // wrapping inside 'auth' prevents application crash until your user context roles are verified.
-    Route::get('/admin/dashboard', [AdminMatchController::class, 'dashboard'])->name('admin.dashboard');
-    Route::get('/admin/matches', [AdminMatchController::class, 'index'])->name('admin.matches.index');
-    Route::post('/admin/matches/ball-by-ball', [AdminMatchController::class, 'storeBall'])->name('admin.matches.storeBall');
-});
+Route::get('/admin/fixtures', function() {
+    $adminController = new AdminMatchController();
+    $data = invoker_get_dashboard_data($adminController);
+    return view('admin.dashboard', array_merge($data, ['currentAdminSubView' => 'fixtures']));
+})->name('admin.fixtures');
+
+Route::get('/admin/match-live', function() {
+    $adminController = new AdminMatchController();
+    $data = invoker_get_dashboard_data($adminController);
+    return view('admin.dashboard', array_merge($data, ['currentAdminSubView' => 'scoring']));
+})->name('admin.match-live');
+
+function invoker_get_dashboard_data($controller) {
+    $reflection = new \ReflectionClass(get_class($controller));
+    $method = $reflection->getMethod('getDashboardData');
+    $method->setAccessible(true);
+    return $method->invoke($controller);
+}

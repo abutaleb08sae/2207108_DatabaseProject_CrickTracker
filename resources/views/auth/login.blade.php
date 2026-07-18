@@ -90,23 +90,14 @@
             </div>
 
             <!-- Password -->
-            <div class="mb-3">
+            <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <label for="password" class="form-label small fw-bold text-secondary mb-0">Password</label>
-                    @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}" class="small text-decoration-none text-primary">Forgot?</a>
-                    @endif
                 </div>
                 <div class="input-group">
                     <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-lock"></i></span>
                     <input type="password" id="password" name="password" class="form-control" required placeholder="••••••••">
                 </div>
-            </div>
-
-            <!-- Remember Me -->
-            <div class="mb-4 form-check">
-                <input type="checkbox" id="remember_me" name="remember" class="form-check-input">
-                <label class="form-check-label small text-muted" for="remember_me">Keep me logged in</label>
             </div>
 
             <!-- Submit Button -->

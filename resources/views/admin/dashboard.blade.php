@@ -3,153 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrickTracker Admin - Match Control Panel</title>
-    <!-- Bootstrap 5 & FontAwesome -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>CrickTracker Admin Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0f172a; font-family: 'Segoe UI', system-ui, sans-serif; color: #f8fafc; }
-        .admin-sidebar { background: #1e293b; min-height: 100vh; position: fixed; width: 280px; border-right: 1px solid #334155; z-index: 100; }
-        .admin-brand { background: #0f172a; padding: 24px; font-weight: 800; color: #10b981; letter-spacing: 0.5px; border-bottom: 1px solid #334155; }
-        .admin-content { margin-left: 280px; padding: 40px; }
-        .control-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
-        .scoring-btn { font-weight: 700; font-size: 1.1rem; padding: 15px; border-radius: 8px; transition: all 0.2s; }
-        .btn-run { background: #334155; color: #f8fafc; border: 1px solid #475569; }
-        .btn-run:hover { background: #475569; color: #fff; }
-        .btn-wicket { background: #ef4444; color: white; border: none; }
-        .btn-wicket:hover { background: #dc2626; }
-        .btn-extra { background: #d97706; color: white; border: none; }
-        .btn-extra:hover { background: #b45309; }
-        .badge-live { background: #10b981; color: #0f172a; font-weight: 700; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
     </style>
 </head>
-<body>
+<body class="text-slate-100 min-h-screen flex flex-col antialiased">
 
-    <!-- Admin Sidebar Navigation -->
-    <div class="admin-sidebar">
-        <div class="admin-brand text-uppercase d-flex align-items-center gap-2">
-            <i class="fa-solid fa-screwdriver-wrench"></i> CrickTracker Center
-        </div>
-        <div class="nav flex-column p-3 gap-1">
-            <a href="#" class="nav-link text-white bg-dark rounded px-3 py-2.5 active"><i class="fa-solid fa-radio me-2 text-emerald"></i> Live Scoring Panel</a>
-            <a href="#" class="nav-link text-muted px-3 py-2.5"><i class="fa-solid fa-people-group me-2"></i> Team Management</a>
-            <a href="#" class="nav-link text-muted px-3 py-2.5"><i class="fa-solid fa-user-gear me-2"></i> Player Profiles</a>
-            <a href="#" class="nav-link text-muted px-3 py-2.5"><i class="fa-solid fa-calendar-check me-2"></i> Schedule Fixtures</a>
-            <hr class="border-secondary my-2">
-            <a href="{{ url('/') }}" class="nav-link text-info px-3 py-2.5"><i class="fa-solid fa-arrow-left me-2"></i> View Public Site</a>
-        </div>
-    </div>
-
-    <!-- Main Controller Form Context -->
-    <div class="admin-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <div class="bg-emerald-500 text-slate-950 p-2 rounded-lg font-bold text-xl tracking-tight">CT</div>
             <div>
-                <h2 class="fw-bold mb-1 text-white">Live Match Control</h2>
-                <p class="text-muted mb-0">Push operational ball events straight down into Oracle relational structures.</p>
-            </div>
-            <div>
-                <span class="badge badge-live px-3 py-2 fs-6">CONSOLE ACTIVE</span>
+                <h1 class="font-bold text-lg tracking-wide text-white">CRICKTRACKER CENTER</h1>
+                <p class="text-xs text-slate-400 font-medium">KUET Sports Management Console</p>
             </div>
         </div>
+        <div class="flex items-center space-x-4">
+            <span class="flex items-center space-x-2 bg-emerald-950 border border-emerald-500/30 px-3 py-1.5 rounded-full text-xs font-semibold text-emerald-400">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>ENGINE CONSOLE ACTIVE</span>
+            </span>
+            <a href="/" class="text-sm bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-4 py-2 rounded-lg transition font-medium">
+                ← View Public Site
+            </a>
+        </div>
+    </header>
 
-        @if(session('success'))
-            <div class="alert alert-success bg-emerald-subtle text-dark border-0 fw-semibold mb-4">{{ session('success') }}</div>
-        @endif
-
-        <div class="row">
-            <!-- Left Panel: Core Transactional Scoring Input Form -->
-            <div class="col-lg-8 col-md-12">
-                <div class="control-card">
-                    <h5 class="fw-bold mb-4 text-white border-bottom border-secondary pb-2"><i class="fa-solid fa-circle-plus text-success me-2"></i>Log Current Ball Outcome</h5>
-                    
-                    <form action="{{ url('/admin/match/ball') }}" method="POST">
-                        @csrf
-                        <!-- Active Match Hidden Target Context mapping back to parameters -->
-                        <input type="hidden" name="match_id" value="{{ $activeMatch->match_id ?? 1 }}">
-                        <input type="hidden" name="innings" value="{{ $activeMatch->current_innings ?? 1 }}">
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-bold">ON-STRIKE BATSMAN</label>
-                                <select class="form-select bg-dark text-white border-secondary" name="batsman_id" required>
-                                    @foreach($battingSquad as $player)
-                                        <option value="{{ $player->player_id }}">{{ $player->first_name }} {{ $player->last_name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-bold">ACTIVE BOWLER</label>
-                                <select class="form-select bg-dark text-white border-secondary" name="bowler_id" required>
-                                    @foreach($bowlingSquad as $player)
-                                        <option value="{{ $player->player_id }}">{{ $player->first_name }} {{ $player->last_name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Runs Matrix Select Options -->
-                        <label class="form-label text-muted small fw-bold mb-2">RUNS SCORED FROM BAT</label>
-                        <div class="row g-2 mb-4">
-                            @foreach([0, 1, 2, 3, 4, 6] as $run)
-                                <div class="col-2">
-                                    <input type="radio" class="btn-check" name="runs_scored" id="run_{{ $run }}" value="{{ $run }}" {{ $run==0 ? 'checked' : '' }}>
-                                    <label class="btn btn-run scoring-btn w-100" for="run_{{ $run }}">{{ $run }}</label>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <!-- Extras Logic Checkboxes -->
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-bold">EXTRAS / MISC EVENTS</label>
-                                <select class="form-select bg-dark text-white border-secondary" name="extra_type">
-                                    <option value="">None (Normal Delivery)</option>
-                                    <option value="WD">Wide (WD)</option>
-                                    <option value="NB">No Ball (NB)</option>
-                                    <option value="LB">Leg Bye (LB)</option>
-                                    <option value="B">Bye (B)</option>
-                                </select>
-                                <input type="number" class="form-control bg-dark text-white border-secondary mt-2" name="extra_runs" value="0" placeholder="Extra runs amount if any">
-                            </div>
-                            <!-- Wicket Dropdown Capture Elements -->
-                            <div class="col-md-6">
-                                <label class="form-label text-muted small fw-bold text-danger">WICKET OUTCOME</label>
-                                <select class="form-select bg-dark text-white border-danger" name="wicket_type">
-                                    <option value="">Not Out / Safe Delivery</option>
-                                    <option value="Bowled">Bowled</option>
-                                    <option value="Caught">Caught</option>
-                                    <option value="LBH">LBW</option>
-                                    <option value="Run Out">Run Out</option>
-                                    <option value="Stumped">Stumped</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label text-muted small fw-bold">BALL COMMENTARY TEXT</label>
-                            <textarea class="form-control bg-dark text-white border-secondary" name="description" rows="2" placeholder="e.g., Short delivery handled beautifully past deep mid-wicket for boundaries..." required></textarea>
-                        </div>
-
-                        <button type="submit" class="btn btn-success bg-emerald text-dark fw-bold w-100 py-2.5"><i class="fa-solid fa-bolt me-1"></i> Transmit Event to Oracle Instance</button>
-                    </form>
+    <div class="flex flex-1">
+        <!-- Sidebar Navigation Layout Layer -->
+        <aside class="w-72 bg-slate-900 border-r border-slate-800 p-6 flex flex-col justify-between hidden md:flex">
+            <div class="space-y-7">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-slate-500 block mb-3">Core Workspaces</span>
+                    <nav class="space-y-1">
+                        <a href="{{ route('admin.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm font-semibold {{ !isset($currentAdminSubView) || $currentAdminSubView == 'scoring' ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                            <span>🏏 Live Scoring Panel</span>
+                        </a>
+                        <a href="{{ route('admin.teams') }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm font-semibold {{ isset($currentAdminSubView) && $currentAdminSubView == 'teams' ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                            <span>👥 Team Management</span>
+                        </a>
+                        <a href="{{ route('admin.players') }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm font-semibold {{ isset($currentAdminSubView) && $currentAdminSubView == 'players' ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                            <span>🎖️ Player Profiles</span>
+                        </a>
+                        <a href="{{ route('admin.fixtures') }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition text-sm font-semibold {{ isset($currentAdminSubView) && $currentAdminSubView == 'fixtures' ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                            <span>📅 Schedule Fixtures</span>
+                        </a>
+                    </nav>
                 </div>
             </div>
+            
+            <div class="pt-6 border-t border-slate-800 text-xs text-slate-500 font-medium">
+                Connected Instance: <span class="text-slate-400 font-mono">Oracle_XE_1521</span>
+            </div>
+        </aside>
 
-            <!-- Right Panel: Current State Monitor Panel -->
-            <div class="col-lg-4 col-md-12">
-                <div class="control-card text-center">
-                    <span class="text-muted small fw-bold d-block mb-1">LIVE STATE TRACKER</span>
-                    <h3 class="fw-bold text-white mb-2">{{ $activeMatch->team1_short ?? 'TEAM 1' }} vs {{ $activeMatch->team2_short ?? 'TEAM 2' }}</h3>
-                    <hr class="border-secondary">
-                    <div class="py-3">
-                        <span class="text-muted d-block small">CURRENT SCORE</span>
-                        <h1 class="display-4 fw-black text-emerald my-1">{{ $activeMatch->team1_score ?? '0' }}/{{ $activeMatch->team1_wickets ?? '0' }}</h1>
-                        <span class="text-muted small">Overs Logged: <strong>{{ $activeMatch->team1_overs ?? '0.0' }}</strong></span>
+        <!-- Dynamic Admin Content Viewspace Area -->
+        <main class="flex-1 p-6 md:p-10 space-y-8 overflow-y-auto max-w-7xl mx-auto w-full">
+            
+            @if(session('success'))
+                <div class="bg-emerald-950/50 border border-emerald-500/50 text-emerald-400 p-4 rounded-xl flex items-center space-x-3 text-sm font-medium">
+                    <span>✅</span> <span>{{ session('success') }}</span>
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="bg-rose-950/50 border border-rose-500/50 text-rose-400 p-4 rounded-xl space-y-1 text-sm font-medium">
+                    @foreach($errors->all() as $error)
+                        <div class="flex items-center space-x-2"><span>⚠️</span> <span>{{ $error }}</span></div>
+                    @endforeach
+                </div>
+            @endif
+
+            @if(!isset($currentAdminSubView) || $currentAdminSubView == 'scoring')
+                <!-- 1. LIVE SCORING PANEL WORKSPACE -->
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Event Logging Control Form Column -->
+                    <div class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-6 md:p-8">
+                        <div class="mb-6">
+                            <h2 class="text-2xl font-bold text-white tracking-tight">Log Current Ball Outcome</h2>
+                            <p class="text-slate-400 text-sm mt-1">Submit dynamic data parameters directly downstream to active transactional packages.</p>
+                        </div>
+
+                        <form action="{{ route('admin.matches.storeBall') }}" method="POST" class="space-y-6">
+                            @csrf
+                            <input type="hidden" name="match_id" value="{{ $activeMatch->match_id ?? $activeMatch->MATCH_ID ?? 1 }}">
+                            <input type="hidden" name="innings" value="{{ $activeMatch->current_innings ?? $activeMatch->CURRENT_INNINGS ?? 1 }}">
+
+                            <!-- Roster Selection Dropdowns Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">On-Strike Batsman</label>
+                                    <select name="batsman_id" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white rounded-xl px-4 py-3 text-sm font-medium transition outline-none">
+                                        @foreach($battingSquad as $player)
+                                            <option value="{{ $player->player_id }}">{{ $player->player_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">Active Bowler</label>
+                                    <select name="bowler_id" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white rounded-xl px-4 py-3 text-sm font-medium transition outline-none">
+                                        @foreach($bowlingSquad as $player)
+                                            <option value="{{ $player->player_id }}">{{ $player->player_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Runs Scoring Radio Grid Block -->
+                            <div>
+                                <label class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">Runs Scored From Bat</label>
+                                <div class="grid grid-cols-6 gap-3">
+                                    @foreach([0,1,2,3,4,6] as $run)
+                                        <label class="cursor-pointer group">
+                                            <input type="radio" name="runs_scored" value="{{ $run }}" class="sr-only peer" {{ $run == 0 ? 'checked' : '' }}>
+                                            <div class="bg-slate-950 border border-slate-700 text-white text-center py-3 rounded-xl font-bold transition group-hover:bg-slate-800 peer-checked:bg-emerald-500 peer-checked:text-slate-950 peer-checked:border-emerald-500 text-base shadow-sm">
+                                                {{ $run }}
+                                            </div>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <!-- Extras and Dismissals Configuration Flex Blocks -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">Extras Registry</label>
+                                    <div class="flex space-x-3">
+                                        <select name="extra_type" class="bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white rounded-xl px-4 py-3 text-sm font-medium transition outline-none flex-1">
+                                            <option value="">None (Normal Delivery)</option>
+                                            <option value="WIDE">Wide Ball</option>
+                                            <option value="NOBALL">No Ball</option>
+                                            <option value="BYE">Bye</option>
+                                            <option value="LEGBYE">Leg Bye</option>
+                                        </select>
+                                        <input type="number" name="extra_runs" value="0" min="0" max="10" class="w-20 text-center bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white rounded-xl py-3 text-sm font-bold outline-none">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">Wicket Outcome</label>
+                                    <select name="wicket_type" class="w-full bg-slate-950 border border-slate-700 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-white rounded-xl px-4 py-3 text-sm font-medium transition outline-none">
+                                        <option value="">Not Out / Safe Delivery</option>
+                                        <option value="BOWLED">Bowled</option>
+                                        <option value="CAUGHT">Caught Out</option>
+                                        <option value="LBW">L.B.W.</option>
+                                        <option value="RUNOUT">Run Out</option>
+                                        <option value="STUMPED">Stumped</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Commentary Log Box -->
+                            <div>
+                                <label class="block text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">Ball Commentary Feed Text</label>
+                                <textarea name="description" placeholder="Describe the action event outcome briefly for the marquee live feed..." rows="3" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white placeholder-slate-600 rounded-xl p-4 text-sm font-medium transition outline-none resize-none"></textarea>
+                            </div>
+
+                            <!-- Transmit Event Submission Button -->
+                            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-bold uppercase tracking-wider py-4 rounded-xl transition shadow-lg shadow-emerald-500/10 active:translate-y-px">
+                                ⚡ Transmit Event to Oracle Instance
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Live State Scorecard Display Dashboard Card -->
+                    <div class="w-full lg:w-96 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-6 flex flex-col justify-between max-h-[500px]">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-500 block">Live State Tracker</span>
+                            <h3 class="text-xl font-bold text-white mt-1 border-b border-slate-800 pb-4">
+                                {{ $activeMatch->team1_short_name ?? 'TEAM 1' }} <span class="text-slate-500 text-sm font-medium mx-1">vs</span> {{ $activeMatch->team2_short_name ?? 'TEAM 2' }}
+                            </h3>
+                            
+                            <div class="py-8 text-center">
+                                <span class="text-xs font-bold tracking-wider text-slate-400 uppercase block mb-1">Current Score Metrics</span>
+                                <div class="text-6xl font-black text-white tracking-tight">
+                                    {{ $activeMatch->team1_score ?? 0 }}<span class="text-slate-500 font-light">/</span>{{ $activeMatch->team1_wickets ?? 0 }}
+                                </div>
+                                <span class="inline-block bg-slate-950 border border-slate-800 text-slate-300 rounded-full px-4 py-1.5 text-xs font-semibold mt-4">
+                                    Overs Logged: {{ number_format($activeMatch->team1_overs ?? 0.0, 1) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-2 text-xs">
+                            <div class="flex justify-between"><span class="text-slate-400">Match Status:</span><span class="text-emerald-400 font-bold uppercase">{{ $activeMatch->match_status ?? 'Live' }}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-400">Current Innings:</span><span class="text-white font-mono font-semibold">{{ $activeMatch->current_innings ?? 1 }}</span></div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
+
+            @elseif($currentAdminSubView == 'teams')
+                <!-- 2. TEAM MANAGEMENT WORKSPACE -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white tracking-tight">Team Structure Management</h2>
+                            <p class="text-slate-400 text-sm">Create league entries and configure team groupings inside the team entity schema.</p>
+                        </div>
+                        <button class="bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl hover:bg-emerald-400 transition">+ Register New Team</button>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center text-slate-400 font-medium text-sm">
+                        📁 No structural changes pending. Dynamic data linked to active league tables.
+                    </div>
+                </div>
+
+            @elseif($currentAdminSubView == 'players')
+                <!-- 3. PLAYER PROFILES WORKSPACE -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white tracking-tight">Player Profile Registries</h2>
+                            <p class="text-slate-400 text-sm">Assign player entities, modify positions, and configure squad rosters.</p>
+                        </div>
+                        <button class="bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl hover:bg-emerald-400 transition">+ Add Player Entity</button>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center text-slate-400 font-medium text-sm">
+                        🏏 Roster rosters mapped dynamically through array indexing parameters safely.
+                    </div>
+                </div>
+
+            @elseif($currentAdminSubView == 'fixtures')
+                <!-- 4. SCHEDULE FIXTURES WORKSPACE -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white tracking-tight">Schedule Fixtures Console</h2>
+                            <p class="text-slate-400 text-sm">Generate tour structures, set match times, and allocate venues.</p>
+                        </div>
+                        <button class="bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl hover:bg-emerald-400 transition">+ Generate Match Slot</button>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center text-slate-400 font-medium text-sm">
+                        📅 All league schedules synchronized with frontend countdown objects.
+                    </div>
+                </div>
+            @endif
+
+        </main>
     </div>
 
 </body>

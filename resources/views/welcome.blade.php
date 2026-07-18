@@ -48,11 +48,27 @@
                 <a href="{{ url('/teams') }}" class="nav-link {{ $currentView == 'teams' ? 'active' : '' }}"><i class="fa-solid fa-shield-halved"></i> Teams</a>
                 <a href="{{ url('/news') }}" class="nav-link {{ $currentView == 'news' ? 'active' : '' }}"><i class="fa-solid fa-newspaper"></i> News</a>
                 
-                {{-- Admin Link Access Check --}}
+                {{-- Admin Controls Option Group --}}
                 @auth
-                    @if(Auth::user()->is_admin)
+                    @if(Auth::user()->IS_ADMIN == '1' || Auth::user()->IS_ADMIN == 1)
                         <hr class="border-secondary my-2 mx-3">
-                        <a href="{{ url('/admin/dashboard') }}" class="nav-link text-warning"><i class="fa-solid fa-user-gear"></i> Admin Panel</a>
+                        <div class="px-3 mb-1 text-warning small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Admin Management</div>
+                        
+                        <a href="{{ url('/admin/dashboard') }}" class="nav-link text-warning py-2 {{ $currentView == 'admin_dashboard' ? 'active' : '' }}">
+                            <i class="fa-solid fa-user-gear"></i> Admin Dashboard
+                        </a>
+                        <a href="{{ url('/admin/players') }}" class="nav-link text-warning py-2 {{ $currentView == 'admin_players' ? 'active' : '' }}">
+                            <i class="fa-solid fa-user-plus"></i> Update Players
+                        </a>
+                        <a href="{{ url('/admin/fixtures') }}" class="nav-link text-warning py-2 {{ $currentView == 'admin_fixtures' ? 'active' : '' }}">
+                            <i class="fa-solid fa-calendar-plus"></i> Manage Fixtures
+                        </a>
+                        <a href="{{ url('/admin/teams') }}" class="nav-link text-warning py-2 {{ $currentView == 'admin_teams' ? 'active' : '' }}">
+                            <i class="fa-solid fa-people-group"></i> Manage Teams
+                        </a>
+                        <a href="{{ url('/admin/match-live') }}" class="nav-link text-danger fw-bold py-2 {{ $currentView == 'admin_live' ? 'active' : '' }}">
+                            <i class="fa-solid fa-circle-dot animate-pulse"></i> Ball-by-Ball Live Entry
+                        </a>
                     @endif
                 @endauth
             </div>
@@ -69,7 +85,7 @@
 
             @auth
                 <div class="text-light small mb-2 text-center text-truncate px-1">
-                    <i class="fa-solid fa-circle-user text-success me-1"></i> {{ Auth::user()->name }}
+                    <i class="fa-solid fa-circle-user text-success me-1"></i> {{ Auth::user()->USERNAME ?? Auth::user()->name }}
                 </div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -129,7 +145,6 @@
                         </div>
                     @endforelse
 
-                    <!-- Quick Mini Panels for Summaries -->
                     <div class="row mt-4">
                         <div class="col-sm-6 mb-3 mb-sm-0">
                             <h6 class="fw-bold mb-2 text-secondary">Latest Result Summary</h6>
@@ -158,7 +173,6 @@
                     </div>
                 </div>
 
-                <!-- Sidebar News widget inside dashboard -->
                 <div class="col-lg-4 col-md-12 mt-4 mt-lg-0">
                     <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-bolt text-warning me-2"></i>Quick Highlights</h5>
                     <div class="card dashboard-card p-3">
@@ -268,7 +282,6 @@
                         <div class="filter-pill"><div><span>Engine Context</span><strong>Oracle 3NF</strong></div></div>
                     </div>
 
-                    <!-- Batting View Section -->
                     <div id="batting-section" class="d-flex justify-content-between align-items-center mb-3">
                         <div class="table-section-title">Batting Records (Most Runs Leaders)</div>
                     </div>
@@ -309,7 +322,6 @@
                         </div>
                     </div>
 
-                    <!-- Bowling View Section -->
                     <div id="bowling-section" class="d-flex justify-content-between align-items-center mb-3">
                         <div class="table-section-title">Bowling Records (Most Wickets Leaders)</div>
                     </div>
