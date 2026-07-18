@@ -58,13 +58,24 @@ COMMIT;
 
 
 -- ====================================================================
--- 3. BRIDGE ARCHITECTURE INITIALIZATION (PL/SQL BLOCK)
+-- 3. BRIDGE ARCHITECTURE INITIALIZATION & MATCH SEEDING (PL/SQL BLOCK)
 -- ====================================================================
 DECLARE
     v_tournament_id NUMBER;
+    v_venue_id      NUMBER;
+    v_cse_id        NUMBER;
+    v_eee_id        NUMBER;
+    v_me_id         NUMBER;
+    v_ce_id         NUMBER;
 BEGIN
-    -- Dynamically grab the exact ID of the tournament created right above
+    -- Dynamically grab lookup configuration details
     SELECT MAX(tournament_id) INTO v_tournament_id FROM tournaments;
+    SELECT MAX(venue_id) INTO v_venue_id FROM venues WHERE name = 'KUET Main Sports Ground';
+    
+    SELECT MAX(team_id) INTO v_cse_id FROM teams WHERE short_name = 'CSE';
+    SELECT MAX(team_id) INTO v_eee_id FROM teams WHERE short_name = 'EEE';
+    SELECT MAX(team_id) INTO v_me_id  FROM teams WHERE short_name = 'ME';
+    SELECT MAX(team_id) INTO v_ce_id  FROM teams WHERE short_name = 'CE';
 
     -- Initialize team statistics caches and the global points table structure safely
     IF v_tournament_id IS NOT NULL THEN
@@ -78,6 +89,27 @@ BEGIN
     FOR p IN (SELECT player_id FROM players) LOOP
         INSERT INTO player_stats_cache (player_id) VALUES (p.player_id);
     END LOOP;
+
+    -- ----------------------------------------------------------------
+    -- DYNAMIC MATCH SEEDING ENGINE
+    -- ----------------------------------------------------------------
+    IF v_venue_id IS NOT NULL AND v_cse_id IS NOT NULL THEN
+        
+        -- A. 1 Active Live Ongoing Match Entry
+        INSERT INTO matches (team1_id, team2_id, venue_id, match_date, match_status, toss_winner_id, toss_decision)
+        VALUES (v_cse_id, v_ce_id, v_venue_id, SYSDATE, 'Live', v_cse_id, 'BAT');
+
+        -- B. 3 Historical Completed (Recent) Matches Entries
+        INSERT INTO matches (team1_id, team2_id, venue_id, match_date, match_status, toss_winner_id, toss_decision)
+        VALUES (v_cse_id, v_eee_id, v_venue_id, CAST(SYSDATE - 3 AS DATE), 'Completed', v_cse_id, 'BAT');
+
+        INSERT INTO matches (team1_id, team2_id, venue_id, match_date, match_status, toss_winner_id, toss_decision)
+        VALUES (v_ce_id, v_me_id, v_venue_id, CAST(SYSDATE - 2 AS DATE), 'Completed', v_me_id, 'BOWL');
+
+        INSERT INTO matches (team1_id, team2_id, venue_id, match_date, match_status, toss_winner_id, toss_decision)
+        VALUES (v_eee_id, v_me_id, v_venue_id, CAST(SYSDATE - 1 AS DATE), 'Completed', v_eee_id, 'BAT');
+        
+    END IF;
 
     -- Make structural additions final
     COMMIT;

@@ -317,7 +317,7 @@
     /**
      * Updates form values and automatically dispatches the action straight to the database
      */
-    public function setBallOutcome(runs, extraType, extraRuns, wicketType) {
+    function setBallOutcome(runs, extraType, extraRuns, wicketType) {
         // Step 1: Populate inputs fields
         document.getElementById('runs_scored').value = runs;
         document.getElementById('extra_type').value = extraType;

@@ -6,10 +6,12 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminMatchController;
 use Illuminate\Http\Request;
 
+/*
+|--------------------------------------------------------------------------
+| Global Cricket Data Helpers
+|--------------------------------------------------------------------------
+*/
 if (!function_exists('getGlobalCricketContext')) {
-    /**
-     * Aggregates standard public layout dependencies.
-     */
     function getGlobalCricketContext() {
         $rawNews = DB::select("
             SELECT title, time 
@@ -32,7 +34,7 @@ if (!function_exists('getGlobalCricketContext')) {
 
 /*
 |--------------------------------------------------------------------------
-| Public Facing Front-End Workspace Routes
+| Public Routes (Nested inside the 'public' subfolder directory)
 |--------------------------------------------------------------------------
 */
 
@@ -98,7 +100,8 @@ Route::get('/', function () {
         return (object)array_change_key_case((array)$match, CASE_LOWER);
     }, $rawUpcoming);
 
-    return view('welcome', array_merge($context, [
+    // Mapped safely to public/dashboard.blade.php
+    return view('public.dashboard', array_merge($context, [
         'currentView'     => 'dashboard',
         'liveMatches'     => $liveMatches,
         'recentMatches'   => $recentMatches,
@@ -121,7 +124,8 @@ Route::get('/recent-matches', function () {
         return (object)array_change_key_case((array)$match, CASE_LOWER);
     }, $rawRecent);
 
-    return view('welcome', array_merge($context, [
+    // Mapped safely to public/recent-matches.blade.php
+    return view('public.recent-matches', array_merge($context, [
         'currentView'   => 'recent',
         'recentMatches' => $recentMatches
     ]));
@@ -146,7 +150,8 @@ Route::get('/upcoming-matches', function () {
         return (object)array_change_key_case((array)$match, CASE_LOWER);
     }, $rawUpcoming);
 
-    return view('welcome', array_merge($context, [
+    // Mapped safely to public/upcoming-matches.blade.php
+    return view('public.upcoming-matches', array_merge($context, [
         'currentView'     => 'upcoming',
         'upcomingMatches' => $upcomingMatches
     ]));
@@ -154,7 +159,8 @@ Route::get('/upcoming-matches', function () {
 
 Route::get('/player-statistics', function () {
     $context = getGlobalCricketContext();
-    return view('welcome', array_merge($context, ['currentView' => 'stats', 'battingStats' => [], 'bowlingStats' => []]));
+    // Mapped safely to public/player-statistics.blade.php
+    return view('public.player-statistics', array_merge($context, ['currentView' => 'stats', 'battingStats' => [], 'bowlingStats' => []]));
 });
 
 Route::get('/teams', function () {
@@ -165,7 +171,8 @@ Route::get('/teams', function () {
         return (object)array_change_key_case((array)$team, CASE_LOWER);
     }, $rawTeams);
 
-    return view('welcome', array_merge($context, ['currentView' => 'teams', 'teams' => $teams]));
+    // Mapped safely to public/teams.blade.php
+    return view('public.teams', array_merge($context, ['currentView' => 'teams', 'teams' => $teams]));
 });
 
 Route::get('/news', function () {
@@ -176,15 +183,15 @@ Route::get('/news', function () {
         return (object)array_change_key_case((array)$item, CASE_LOWER);
     }, $rawNews);
 
-    return view('welcome', array_merge($context, ['currentView' => 'news', 'allNews' => $allNews]));
+    // Mapped safely to public/news.blade.php
+    return view('public.news', array_merge($context, ['currentView' => 'news', 'allNews' => $allNews]));
 });
 
 /*
 |--------------------------------------------------------------------------
-| Authentication Protocols
+| Authentication Portal Handlers
 |--------------------------------------------------------------------------
 */
-
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -193,12 +200,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 /*
 |--------------------------------------------------------------------------
-| Admin Command & Scoring Workspace Cluster (Oracle Connected Instance)
+| Admin Panel Subsystem Group Module
 |--------------------------------------------------------------------------
 */
-
 Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
-    
     Route::get('/', [AdminMatchController::class, 'index']);
     Route::get('/dashboard', [AdminMatchController::class, 'showLiveScoring'])->name('dashboard');
     Route::get('/match-live', [AdminMatchController::class, 'showLiveScoring'])->name('match-live');
@@ -223,7 +228,6 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
         return redirect()->route('admin.teams')->with('success', 'Team registration compiled successfully.');
     })->name('teams.store');
 
-    // FIXED: Maps data inputs for player_role, batting_style, and date_of_birth to safely clear all ORA-01400 table constraints
     Route::post('/players', function(Request $request) {
         $nextPlayerIdSelect = DB::select("SELECT COALESCE(MAX(player_id), 0) + 1 as next_id FROM players");
         $nextPlayerId = $nextPlayerIdSelect[0]->next_id ?? $nextPlayerIdSelect[0]->NEXT_ID ?? 1;
